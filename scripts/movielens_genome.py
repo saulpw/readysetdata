@@ -1,10 +1,16 @@
+#!env python
+
 import sys
 import re
 
-from utils import output_parquet, output_duckdb, JsonLines, require_file, unzip
+from dxd.utils import output_parquet, output_duckdb, JsonLines, require_file, unzip
 
 output_table = output_duckdb
 
+def split_names(s):
+    if not s:
+        return []
+    return re.split(r',(?!\s?Jr.,)\s*', s)
 
 def main():
     data = unzip(require_file('https://files.grouplens.org/datasets/tag-genome-2021/genome_2021.zip'))
@@ -19,8 +25,8 @@ def main():
             imdb_id = d['imdbId'],
             title = d['title'].replace('\u00a0', ' '),
             year = None,
-            directed_by = re.split(r',(?!\s?Jr.,)\s*', d['directedBy']),
-            starring = re.split(r',(?!\s?Jr.,)\s*', d['starring']),
+            directed_by = split_names(d['directedBy']),
+            starring = split_names(d['starring']),
             avg_rating = d['avgRating'],
         )
 
