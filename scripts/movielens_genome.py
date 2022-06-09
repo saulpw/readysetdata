@@ -1,16 +1,15 @@
-#!env python
+#!/usr/bin/env python
 
 import sys
 import re
 
-from dxd.utils import output_parquet, output_duckdb, JsonLines, require_file, unzip
-
-output_table = output_duckdb
+from dxd.utils import JsonLines, require_file, unzip, output
 
 def split_names(s):
     if not s:
         return []
     return re.split(r',(?!\s?Jr.,)\s*', s)
+
 
 def main():
     data = unzip(require_file('https://files.grouplens.org/datasets/tag-genome-2021/genome_2021.zip'))
@@ -38,20 +37,20 @@ def main():
 
         movie_ids[d['item_id']] = r['imdb_id']
 
-    output_table('movielens', 'movies', movies)
+    output('movielens', 'movies', movies)
 
     tags = {d['id']: d['tag'] for d in lens_raw('tags')}
 
     def movie_id(item_id):
         return movie_ids.get(item_id, 'LENS'+str(item_id))
 
-    output_table('movielens', 'ratings', [
+    output('movielens', 'ratings', [
         dict(imdb_id=movie_id(d['item_id']),
              rating=int(d['rating']*2))
         for d in lens_raw('ratings')
     ])
 
-    output_table('movielens', 'tags', [
+    output('movielens', 'tags', [
         dict(imdb_id=movie_id(d['item_id']),
              user_id=d['user_id'],
              tag=tags[d['tag_id']],
@@ -59,7 +58,7 @@ def main():
         for d in lens_raw('survey_answers')
     ])
 
-    output_table('movielens', 'reviews', [
+    output('movielens', 'reviews', [
         dict(imdb_id=movie_id(d['item_id']),
              review_text=d.get('txt', ''))
         for d in lens_raw('ratings')
