@@ -18,21 +18,36 @@ class AttrDict(dict):
                 raise AttributeError
             return None
 
+class Progress:
+    def __init__(self, iterator, name=''):
+        self.iterator = iterator
+        self.name = name
+
+    def __iter__(self):
+        for i, x in enumerate(self.iterator):
+            yield x
+            if i % 10000 == 0:
+                print(f'\r{self.name} {i}', end='', file=sys.stderr)
+                sys.stderr.flush()
+                if debug and i:
+                    break
+
+        print('', file=sys.stderr)
+
+
+def csv(fp):
+    import csv
+    for r in Progress(csv.DictReader(fp), fp.name):
+        yield AttrDict(r)
+
 
 def asv(fp, delim='\t'):
     it = iter(fp)
     hdrs = next(it).split(delim)
 
-    import sys
-    for i, line in enumerate(it):
-        yield AttrDict(zip(hdrs, line.split('|')))
-        if i % 10000 == 0:
-            print(f'\r{fp.name} {i}', end='', file=sys.stderr)
-            sys.stderr.flush()
-            if debug and i:
-                break
+    for line in Progress(it, fp.name):
+        yield AttrDict(zip(hdrs, line.split(delim)))
 
-    print('', file=sys.stderr)
 
 
 class JsonLines:
@@ -42,26 +57,12 @@ class JsonLines:
     def __iter__(self):
         import json
 
-        for i, line in enumerate(self.fp):
-            if i % 10000 == 0:
-                print(f'\r{self.fp.name} {i}', end='', file=sys.stderr)
-                sys.stderr.flush()
-                if debug and i:
-                    break
-            yield json.loads(line)
-
-        print('', file=sys.stderr)
+        for line in Progress(self.fp, self.fp.name):
+            yield AttrDict(json.loads(line))
 
 
-def pyarrow_table(rows, fields=None, types=None):
-    import pyarrow as pa
-
-    rows = list(rows)
-    if not fields:
-        fields = list(rows[0].keys())
-
-    return pa.table([ [r.get(fieldname, None) for r in rows] for fieldname in fields],
-            names=fields)
+def jsonl(fp):
+    return JsonLines(fp)
 
 
 def get_optarg(arg):
@@ -72,7 +73,19 @@ def get_optarg(arg):
         return ''
 
 
-def output(dbname, tblname, rows, **kwargs):
+def batchify(rows, n=10000):
+    rowbatch = []
+    for row in rows:
+        rowbatch.append(row)
+        if len(rowbatch) >= n:
+            yield rowbatch
+            rowbatch = []
+
+    if rowbatch:
+        yield rowbatch
+
+
+def output(dbname, tblname, schemastr, rows):
     fmtstr = get_optarg('-f')
 
     if fmtstr:
@@ -85,96 +98,140 @@ def output(dbname, tblname, rows, **kwargs):
     outdir = get_optarg('-o') or '.'
     Path(outdir).mkdir(parents=True, exist_ok=True)
 
-    rows = list(rows)  # in case of iterator, listify once and for all
+    dbpath = str(Path(outdir)/dbname)
 
-    for fmt in fmts:
-        if fmt:
-            globals()[f'output_{fmt}'](str(Path(outdir)/dbname), tblname, rows, **kwargs)
-
-
-def output_parquet(dbname, tblname, rows, fields=None):
-    import pyarrow.parquet as pq
-
-    pq.write_table(pyarrow_table(rows, fields), f'{dbname}_{tblname}.parquet')
-
-
-def output_duckdb(dbname, tblname, rows, fields=None):
-    import duckdb
-
-    tbl = pyarrow_table(rows, fields)
-
-    con = duckdb.connect(f'{dbname}.duckdb')
-    con.execute(f"CREATE TABLE {tblname} AS SELECT * FROM tbl")
-
-
-def pyarrow_arrays(rows, fields=None, types=None):
-    import pyarrow as pa
-    typemap = {
-        'f': pa.float32(),
-        'd': pa.float64(),
-        'i': pa.int32(),
-        'l': pa.int64(),
-    }
-
-    schema = pa.schema([
-        (fieldname, typemap.get(type, pa.string()))
-            for fieldname, type in zip(fields, types)]
-    )
-
-    return [
-        pa.array([r.get(fieldname, None) for r in rows], type=typemap.get(type, None))
-            for fieldname, type in itertools.zip_longest(fields, types)
+    outputters = [
+        globals()[f'output_{fmt}'](dbpath, tblname, schemastr)
+            for fmt in fmts
     ]
+    for rowbatch in batchify(rows):
+        for outputter in outputters:
+            outputter.output_batch(rowbatch)
+
+    for outputter in outputters:
+        outputter.finalize()
 
 
-def output_arrow(dbname, tblname, rows, fields=None, types='', new_writer=None):
+class ParquetOutputTable:
+    def __init__(self, fn, schema):
+        self.fn = fn
+        self.rows = []
+        self.schema = schema
+
+    def output_batch(self, rowbatch):
+        self.rows.extend(rowbatch) 
+
+    def finalize(self):
+        import pyarrow.parquet as pq
+        import pyarrow as pa
+
+        pq.write_table(pa.table(list(zip(*self.rows)), schema=pa.schema(self.schema)), self.fn)
+
+
+def output_parquet(dbname, tblname, schemastr):
+    return ParquetOutputTable(f'{dbname}_{tblname}.parquet', parse_schema(schemastr))
+
+
+class DuckDbOutputter:
+    def __init__(self, fn, tblname, schema):
+        import duckdb
+
+        self.fn = fn
+        self.tblname = tblname
+        self.schema = schema
+        self.con = duckdb.connect(fn)
+        self.table_created = False
+
+    def output_batch(self, rowbatch):
+        import pyarrow as pa
+
+        tbl = pa.table(list(zip(*rowbatch)), schema=pa.schema(self.schema))
+#        tbl = pa.table([
+#            pa.array([r[i] for r in rowbatch], type=fieldtype)
+#                for i, (fieldname, fieldtype) in enumerate(self.schema)
+#        ])
+
+        if not self.table_created:
+            self.con.execute(f"CREATE TABLE {self.tblname} AS SELECT * FROM tbl")
+            self.table_created = True
+        else:
+            self.con.execute(f"INSERT INTO {self.tblname} SELECT * FROM tbl")
+
+    def finalize(self):
+        self.con.close()
+
+
+def output_duckdb(dbname, tblname, schemastr):
+    return DuckDbOutputter(f'{dbname}.duckdb', tblname, parse_schema(schemastr))
+
+
+def arrow_gettype(s):
     import pyarrow as pa
 
-    typemap = {
+    if s[0] == 'A':
+        return pa.list_(arrow_gettype(s[1:]))
+
+    if not s:
+        return pa.string()
+
+    return {
         'f': pa.float32(),
         'd': pa.float64(),
         'i': pa.int32(),
         'l': pa.int64(),
-    }
-
-    def gettype(v):
-        if isinstance(v, list):
-            return pa.list_(gettype(v[0]))
-
-        type_typemap = {
-            int: pa.int64(),
-            float: pa.float64(),
-            str: pa.string(),
-        }
-        return type_typemap.get(type(v))
+        'b': pa.int8(),
+    }.get(s, pa.string())
 
 
-    rows = list(rows)
-    if not fields:
-        firstrow = rows[0]
-        fields = list(firstrow.keys())
-        types = [
-            gettype(f) for f in firstrow.values()
-        ]
-
-    schema = pa.schema([
-        (fieldname, typemap.get(type, type))
-            for fieldname, type in zip(fields, types)]
-    )
-
-    if not new_writer:
-        new_writer = pa.ipc.new_file
-    with open(f'{dbname}_{tblname}.arrow', mode='wb') as outf:
-        with new_writer(outf, schema) as writer:
-            writer.write_batch(pa.record_batch(pyarrow_arrays(rows, fields, types), names=fields))
-
-
-def output_arrows(*args, **kwargs):
+def parse_schema(schema):
     import pyarrow as pa
-    return output_arrow(*args, **kwargs, new_writer=pa.ipc.new_stream)
+
+    ret = []
+    for fieldname in schema.split():
+        if ':' in fieldname:
+            fieldname, fieldtype = fieldname.split(':')
+            fieldtype = arrow_gettype(fieldtype)
+        else:
+            fieldtype = pa.string()
+
+        ret.append((fieldname, fieldtype))
+
+    return ret
 
 
-def require_file(urlstr:str):
+def output_arrow(dbname, tblname, schemastr):
+    return ArrowOutput(f'{dbname}_{tblname}.arrow', parse_schema(schemastr))
+
+
+def output_arrows(dbname, tblname, schemastr):
+    return ArrowOutput(f'{dbname}_{tblname}.arrows', parse_schema(schemastr), stream=True)
+
+
+class ArrowOutput:
+    def __init__(self, fn, schema, stream=False):
+        import pyarrow as pa
+
+        self.fp = open(fn, mode='wb')
+        self.schema = schema
+        if stream:
+            self.writer = pa.ipc.new_stream(self.fp, pa.schema(schema))
+        else:
+            self.writer = pa.ipc.new_file(self.fp, pa.schema(schema))
+
+    def output_batch(self, rowbatch):
+        import pyarrow as pa
+        data = [
+            pa.array([r[i] for r in rowbatch], type=fieldtype)
+                for i, (fieldname, fieldtype) in enumerate(self.schema)
+        ]
+        self.writer.write_batch(pa.record_batch(data, schema=pa.schema(self.schema)))
+
+    def finalize(self):
+        self.writer.close()
+        self.fp.close()
+
+
+def download(urlstr:str):
     from urllib.parse import urlparse
 
     url = urlparse(urlstr)
@@ -196,6 +253,14 @@ def require_file(urlstr:str):
                 print(f'\r{fp.name} {amt*100/total:d}%  {amt}/{total}', end='', file=sys.stderr)
 
     return p
+
+
+def unzip_text(p, fn):
+    import zipfile
+    import io
+    zf = zipfile.ZipFile(p)
+    fp = zf.open(fn, 'r')
+    return io.TextIOWrapper(fp, 'utf-8')
 
 
 def unzip(p):

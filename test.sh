@@ -2,7 +2,8 @@
 
 set -e
 
-rm -rf test_output/
+rm -rf output/
 
-./scripts/movielens_genome.py --debug -o test_output
-./scripts/gnis_us.py --debug -o test_output
+for script in $(ls $scripts) ; do
+    $script $* -o output
+done
