@@ -236,7 +236,7 @@ def download(urlstr:str):
 
     url = urlparse(urlstr)
 
-    p = Path(url.netloc, *Path(url.path[1:]).parts)
+    p = Path('downloads', url.netloc, *Path(url.path[1:]).parts)
 
     if not p.exists():
         parentdir = Path(url.netloc, *Path(url.path[1:]).parent.parts)
