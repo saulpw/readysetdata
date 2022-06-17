@@ -2,109 +2,127 @@
 
 import fileinput
 import json
+import sys
+import re
 
-from dxd.utils import Progress
+from itertools import chain
 
-
-def add_attr(d, oldkey, line):
-    try:
-        line = line.lstrip('| ')
-        i = line.index('=')
-        key = line[:i].strip()
-        val = line[i+1:].strip()
-        if val:
-            d[key] = val
-        return key
-    except ValueError as e:  # no = in line
-        if oldkey:
-            d[oldkey] = d.get(oldkey, '') + line
-        return oldkey
+import mwparserfromhell as mwp
 
 
-def parse_infobox(s):
-    infoboxes = [] # a stack of (key, infobox, opens), since infoboxes can be nested
+def parse_infoboxes(s):
+    for t in mwp.parse(s, skip_style_tags=True).filter_templates(recursive=False):
+        name = t.name.lower()
+        if name.startswith('infobox'):
+            yield t
 
-    key = None
-    infobox = None
-    opens = 0
+def iterparse(s):
+    yield from mwp.parse(s, skip_style_tags=True).filter(recursive=False)
 
-    assert s.startswith('{{Infobox'), s
-    assert s.endswith('}}')
-
-    for line in s.splitlines():
-        opens += line.count('{') - line.count('}')
-
-        line = line.strip()
-        if '{{Infobox' in line:
-            i = line.index('{{Infobox')
-            infobox_line = line[i:]
-            if line.count('{') - line.count('}') < 0:
-                continue
-            cat, *rest = infobox_line[10:].split('|')
-            d = dict(category=cat)
-            for x in rest:
-                add_attr(d, None, x)
-
-            if '=' in line[:i]:  # pre-infobox line
-                key = add_attr(d, key, line[:i])
-
-            if infobox is None:
-                assert key is None
-                infobox = d
-            else:
-                infobox.setdefault('info_'+key, []).append(d)
-                newopens = infobox_line[i:].count('{') - infobox_line[i:].count('}')
-                infoboxes.append((key, infobox, opens-newopens))
-                infobox = d
-                opens = newopens
-
-        elif line.startswith('|'):
-            key = add_attr(infobox, key, line[1:])
-        elif infobox and key:
-            line = line.rstrip('} ')
-            if line:
-                infobox[key] = infobox.get(key, '')
-        # else outside infobox, ignore it
-
-        if opens == 0:
-            if infoboxes:
-                key, infobox, opens = infoboxes.pop(-1)
-            else:
-                return infobox
-
-
-def annotate_braces(text):
-    opens = 0  # number of open {{ remaining to be closed
-    infobox = '' # current infobox string
-    for line in text.splitlines():
-        yield opens, line
-        if infobox:
-            line = html.unescape(line)
-            opens += line.count('{') - line.count('}')
-
-            infobox += line + '\n'
-
-            if opens <= 0:
-                infobox = ''
-                opens = 0
-
-        else:
-            if '{{Infobox' in line:
-                i = line.index('{{Infobox')
-                line = line[i:]
-                opens = line.count('{') - line.count('}')
-                if opens == 0:
+def itervalues(n):
+            if isinstance(n, mwp.nodes.template.Template):
+                name = ''.join(x for x in n.name.lower().strip() if x not in ' -_')
+                if name in ('break', 'brk', 'br', 'crlf', 'endflatlist', 'sup', 'thinsp'):
                     pass
+#                elif name == 'infobox':
+#                    for x in iterparse(str(n)):
+#                        yield from itervalues(x)
+                elif 'list' in name or name.startswith('ubl') or name in ('nowrap', 'csv'):
+                    # in ('grid list', 'gridlist', 'plainlist', 'hlist', 'tree list', 'flatlist', 'unbulleted list', 'ublist', 'ubl', 'plain list', 'flat list', 'bulleted list', 'cslist', 'unbulleted_list'):
+                    for p in n.params:
+                        for x in iterparse(str(p)):
+                            yield from itervalues(x)
+#                        if '=' in p: # FIXME
+#                            continue
+#                        for y in ' '.join(chain(*(itervalues(x) for x in iterparse(str(p))))).splitlines():
+#                            r = y.strip('* \n')
+#                            if r:
+#                                yield r
+                elif 'date' in name or 'year' in name or name in ('bda', 'dda', 'bya', 'dya', 'birthdeathage', 'circa', 'c.'):
+                    ymd = [x for x in n.params if '=' not in x]
+                    try:
+                        y, m, d = list(map(int, map(str, ymd[:3])))
+                        yield f'{y:04d}-{m:02d}-{d:02d}'
+                    except ValueError:
+                        if ymd:
+                            yield ymd[0].strip()
+                elif name in ('big', 'small', 'smaller', 'nowrap', 'nobold', 'url', 'marriage', 'married', 'website', 'center', 'awd'):
+                    yield ':'.join(str(p).strip() for p in n.params if '=' not in p)
                 else:
-                    infobox = line + '\n'
-            # otherwise ignore it
+                    r = str(n).strip()
+                    if r:
+                        yield r
+            elif isinstance(n, mwp.nodes.tag.Tag):
+                if n.tag in ('li', 'i', 'b', 'br'):
+                    yield from itervalues(n.contents)
+                else:
+                    r = f'<{n.tag}> {n}'.strip()
+                    if r:
+                        yield r
+
+            else:
+                r = str(n).strip()
+                if r:
+                    yield r
+
+
+def infobox_to_dict(t):
+    r = dict(infobox_type=t.name[8:].strip())
+    more_infoboxes = []
+    for x in t.params:
+        k = str(x.name).strip()
+        v = []
+        for n in x.value.nodes:
+            if isinstance(n, mwp.nodes.template.Template) and n.name.lower().strip().startswith('infobox'):
+                more_infoboxes.append(n)
+            else:
+                v.extend(itervalues(n))
+
+        if len(v) == 1:
+            v = v[0]
+
+        if v:
+            r[k] = v
+    return r, more_infoboxes
+
+
+def linktext(m):
+    s = m.group(1)
+    ret = s.split("|")[-1]
+
+    if s.startswith("File:"): # image link
+        ret = f' {ret} '  # spaces on either side for niceness
+
+    return ret
+
+def clean_wptext(t):
+        t = re.sub(r'<!--.*?-->', '', t, flags=re.DOTALL)
+        t = re.sub(r'<ref[^<]+?/>', '', t, flags=re.DOTALL)
+        t = re.sub(r'<\s*ref.*?<\s*/ref>', '', t, flags=re.DOTALL)
+        t = re.sub(r'<\s*span>(.*?)<\s*/span>', r'\1', t, flags=re.DOTALL)
+
+        t = re.sub(r'\[\[(.*?)\]\]', linktext, t)   # delinkify links
+
+        return t
 
 
 def main():
-    for text in Progress(fileinput.input()):
+    for i, text in enumerate(fileinput.input()):
         row = json.loads(text)
-        for box in row['infoboxes']:
-            print(json.dumps(parse_infobox(box)))
 
+        for box in parse_infoboxes(clean_wptext(row['text'])):
+
+            if '--debug' in sys.argv:
+                print(i, row['title'], file=sys.stderr)
+                sys.stderr.flush()
+
+            infoboxes = [box]
+            while infoboxes:
+                out = dict(title=row['title'])
+                d, more = infobox_to_dict(infoboxes.pop())
+                infoboxes.extend(more)
+                out.update(d)
+
+            print(json.dumps(out))
 
 main()

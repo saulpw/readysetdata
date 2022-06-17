@@ -239,8 +239,8 @@ def download(urlstr:str):
     p = Path('downloads', url.netloc, *Path(url.path[1:]).parts)
 
     if not p.exists():
-        parentdir = Path(url.netloc, *Path(url.path[1:]).parent.parts)
-        parentdir.mkdir(parents=True, exist_ok=True)
+#        parentdir = Path('downloads', url.netloc, *Path(url.path[1:]).parent.parts)
+        p.parent.mkdir(parents=True, exist_ok=True)
 
         with p.open(mode='wb') as fp:
             import requests

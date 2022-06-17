@@ -6,14 +6,14 @@ import json
 import xml.sax
 
 
-def detextify(d):
+def simplify(d):
     if not isinstance(d, dict):
         return d
 
     if len(d) == 1 and '#text' in d:
         return d['#text']
 
-    return {k:detextify(v) for k, v in d.items() if v}
+    return {k:simplify(v) for k, v in d.items() if v}
 
 
 class Handler(xml.sax.handler.ContentHandler):
@@ -24,7 +24,7 @@ class Handler(xml.sax.handler.ContentHandler):
 
     def startElement(self, tag, attrs):
         if tag in self.tags or self.stack:
-            self.stack.append([tag, dict(attrs)])
+            self.stack.append([tag, dict(attrs), []])
 
         if self.stack[1:]:
             self.stack[-2][1][tag] = self.stack[-1][1]
@@ -34,16 +34,19 @@ class Handler(xml.sax.handler.ContentHandler):
         if not self.stack:
             return
 
-        _, contents = self.stack.pop()
+        _, contents, texts = self.stack.pop()
+
+        s = ''.join(texts).strip()
+        if s:
+            contents['#text'] = s
 
         if tag in self.tags:
-            print(json.dumps(detextify(contents)), file=self.fp)
+            print(json.dumps(simplify(contents)), file=self.fp)
 
 
     def characters(self, content):
-        if content.strip() and self.stack:
-            d = self.stack[-1][1]
-            d['#text'] = d.get('#text', '') + content
+        if self.stack:
+            self.stack[-1][2].append(content)
 
 
 def main():
