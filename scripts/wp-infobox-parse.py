@@ -8,6 +8,7 @@ import re
 from itertools import chain
 
 import mwparserfromhell as mwp
+import dateutil.parser
 
 
 def parse_infoboxes(s):
@@ -24,28 +25,23 @@ def itervalues(n):
                 name = ''.join(x for x in n.name.lower().strip() if x not in ' -_')
                 if name in ('break', 'brk', 'br', 'crlf', 'endflatlist', 'sup', 'thinsp'):
                     pass
-#                elif name == 'infobox':
-#                    for x in iterparse(str(n)):
-#                        yield from itervalues(x)
                 elif 'list' in name or name.startswith('ubl') or name in ('nowrap', 'csv'):
                     # in ('grid list', 'gridlist', 'plainlist', 'hlist', 'tree list', 'flatlist', 'unbulleted list', 'ublist', 'ubl', 'plain list', 'flat list', 'bulleted list', 'cslist', 'unbulleted_list'):
                     for p in n.params:
                         for x in iterparse(str(p)):
                             yield from itervalues(x)
-#                        if '=' in p: # FIXME
-#                            continue
-#                        for y in ' '.join(chain(*(itervalues(x) for x in iterparse(str(p))))).splitlines():
-#                            r = y.strip('* \n')
-#                            if r:
-#                                yield r
-                elif 'date' in name or 'year' in name or name in ('bda', 'dda', 'bya', 'dya', 'birthdeathage', 'circa', 'c.'):
+                elif 'year' in name or name in ('bda', 'dda', 'bya', 'dya', 'birthdeathage', 'circa', 'c.',
+                        'deathdateandage', 'birthdateandage', 'birthdate', 'deathdate', 'startdate'):
                     ymd = [x for x in n.params if '=' not in x]
                     try:
                         y, m, d = list(map(int, map(str, ymd[:3])))
                         yield f'{y:04d}-{m:02d}-{d:02d}'
                     except ValueError:
                         if ymd:
-                            yield ymd[0].strip()
+                            try:
+                                yield dateutil.parser.parse(ymd[0])
+                            except Exception:
+                                yield ymd[0].strip()
                 elif name in ('big', 'small', 'smaller', 'nowrap', 'nobold', 'url', 'marriage', 'married', 'website', 'center', 'awd'):
                     yield ':'.join(str(p).strip() for p in n.params if '=' not in p)
                 else:
@@ -104,16 +100,10 @@ def clean_wptext(t):
 
         t = re.sub(r'\[\[(.*?)\]\]', linktext, t)   # delinkify links
         t = re.sub(r"'''?", '', t)
-        t = re.sub(r'−', '-', t)
-        t = re.sub(r'\u2212', '-', t)
-        t = re.sub(r'\u2013', '-', t)
-        t = re.sub(r'&minus;', '-', t)
-        t = re.sub(r'&ndash;', '-', t)
+        t = re.sub(r'−|\u2212|\u2013|&minus;|&ndash;', '-', t)
         t = re.sub(r'&nbsp;', ' ', t)
 
         # from https://github.com/dijs/infobox-parser/blob/master/util/cleanSource.js
-
-#        t = re.sub(r'<small>.*<\/small>', '', t);
 
         t = re.sub(r'\|display=inline', '', t)
         t = re.sub(r'<sup>', '^', t)
@@ -122,6 +112,8 @@ def clean_wptext(t):
         t = re.sub(r'\{\{efn\|([^\}\}]+)\}\}', '', t) # Remove explanatory footnotes
         t = re.sub(r'\{\{\s*nowrap\s*\|([^\n\}]+)\}\}', r'\1', t, flags=re.IGNORECASE) # Replace nowrap template with its content
         t = t.replace("|''See list''", '')
+        t = t.replace('|class=nowrap', '')
+        t = re.sub(r'|list_style=[^|}]*', '', t)
 
         return t
 
