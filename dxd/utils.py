@@ -100,11 +100,12 @@ def output(dbname, tblname, schemastr, rows):
 
     dbpath = str(Path(outdir)/dbname)
 
-    outputters = [
-        globals()[f'output_{fmt}'](dbpath, tblname, schemastr)
-            for fmt in fmts
-    ]
-    for rowbatch in batchify(rows):
+    for i, rowbatch in enumerate(batchify(rows)):
+        if i == 0:  # first batch
+            outputters = [
+                globals()[f'output_{fmt}'](dbpath, tblname, schemastr)
+                    for fmt in fmts
+            ]
         for outputter in outputters:
             outputter.output_batch(rowbatch)
 
@@ -119,7 +120,7 @@ class ParquetOutputTable:
         self.schema = schema
 
     def output_batch(self, rowbatch):
-        self.rows.extend(rowbatch) 
+        self.rows.extend(rowbatch)
 
     def finalize(self):
         import pyarrow.parquet as pq
@@ -152,6 +153,7 @@ class DuckDbOutputter:
 #        ])
 
         if not self.table_created:
+            self.con.execute(f"DROP TABLE IF EXISTS {self.tblname}")
             self.con.execute(f"CREATE TABLE {self.tblname} AS SELECT * FROM tbl")
             self.table_created = True
         else:

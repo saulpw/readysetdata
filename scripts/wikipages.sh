@@ -14,4 +14,4 @@ scripts/download.py $URL \
     | tee $OUTDIR/raw-infoboxes.jsonl \
     | scripts/wp-infobox-parse.py \
     | tee $OUTDIR/all-infoboxes.jsonl \
-    | scripts/demux-jsonl.py 'category' -o $OUTDIR
+    | scripts/demux-jsonl.py 'infobox_type' -o $OUTDIR

@@ -95,13 +95,33 @@ def linktext(m):
 
     return ret
 
+
 def clean_wptext(t):
-        t = re.sub(r'<!--.*?-->', '', t, flags=re.DOTALL)
+        t = re.sub(r'<!--.*?-->', '', t, flags=re.DOTALL)  # HTML comments
         t = re.sub(r'<ref[^<]+?/>', '', t, flags=re.DOTALL)
         t = re.sub(r'<\s*ref.*?<\s*/ref>', '', t, flags=re.DOTALL)
         t = re.sub(r'<\s*span>(.*?)<\s*/span>', r'\1', t, flags=re.DOTALL)
 
         t = re.sub(r'\[\[(.*?)\]\]', linktext, t)   # delinkify links
+        t = re.sub(r"'''?", '', t)
+        t = re.sub(r'−', '-', t)
+        t = re.sub(r'\u2212', '-', t)
+        t = re.sub(r'\u2013', '-', t)
+        t = re.sub(r'&minus;', '-', t)
+        t = re.sub(r'&ndash;', '-', t)
+        t = re.sub(r'&nbsp;', ' ', t)
+
+        # from https://github.com/dijs/infobox-parser/blob/master/util/cleanSource.js
+
+#        t = re.sub(r'<small>.*<\/small>', '', t);
+
+        t = re.sub(r'\|display=inline', '', t)
+        t = re.sub(r'<sup>', '^', t)
+        t = re.sub(r'<\/sup>', '', t)
+        t = re.sub(r'\{\{sfn\|([^\}\}]+)\}\}', '', t) # Remove shortened footnote templates
+        t = re.sub(r'\{\{efn\|([^\}\}]+)\}\}', '', t) # Remove explanatory footnotes
+        t = re.sub(r'\{\{\s*nowrap\s*\|([^\n\}]+)\}\}', r'\1', t, flags=re.IGNORECASE) # Replace nowrap template with its content
+        t = t.replace("|''See list''", '')
 
         return t
 
@@ -118,11 +138,11 @@ def main():
 
             infoboxes = [box]
             while infoboxes:
-                out = dict(title=row['title'])
+                out = dict(wp_title=row['title'])
                 d, more = infobox_to_dict(infoboxes.pop())
                 infoboxes.extend(more)
                 out.update(d)
 
-            print(json.dumps(out))
+                print(json.dumps(out))
 
 main()

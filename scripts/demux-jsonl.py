@@ -15,7 +15,7 @@ def main(fieldname):
 
     for line in sys.stdin:
         row = json.loads(line)
-        s = row[fieldname]
+        s = row[fieldname].lower()
         s = re.sub(r'[^A-Za-z0-9]+', '_', s)
         s = s.strip('_')  # both leading and trailing
         s = s[:100]  # max fn length < 255
