@@ -1,0 +1,5 @@
+pyarrow
+python-dateutil
+mwparserfromhell
+duckdb
+requests
