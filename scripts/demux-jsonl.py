@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
 
+'''
+Usage: $0 <fieldname> <output_dir>
+
+Demux JSONL from stdin into separate files in <output_dir> based on the <fieldname> in each JSON object.
+'''
+
+
 import sys
 import re
 import json
 from pathlib import Path
 
-from dxd.utils import get_optarg
 
-
-def main(fieldname):
-    p = Path(get_optarg('-o'))
+def main(fieldname, output_dir):
+    p = Path(output_dir)
     if not p.exists():
         p.mkdir(parents=True, exist_ok=True)
 
@@ -23,4 +28,4 @@ def main(fieldname):
             fp.write(line)
 
 
-main(sys.argv[1])
+main(*sys.argv[1:])

@@ -53,24 +53,24 @@ def unzip_text(p, fn):
 
 
 def unzip(p):
-    from stream_unzip import stream_unzip
+#    from stream_unzip import stream_unzip
     import zipfile
     return zipfile.ZipFile(p)
 
 
 ## parse
 
-def csv(fp):
+def parse_csv(fp):
     import csv
-    for r in Progress(csv.DictReader(fp), fp.name):
+    for r in Progress(csv.DictReader(fp)):
         yield AttrDict(r)
 
 
-def asv(fp, delim='\t'):
+def parse_asv(fp, delim='\t'):
     it = iter(fp)
     hdrs = next(it).split(delim)
 
-    for line in Progress(it, fp.name):
+    for line in Progress(it):
         yield AttrDict(zip(hdrs, line.split(delim)))
 
 
@@ -81,11 +81,11 @@ class JsonLines:
     def __iter__(self):
         import json
 
-        for line in Progress(self.fp, self.fp.name):
+        for line in self.fp:
             yield AttrDict(json.loads(line))
 
 
-def jsonl(fp):
+def parse_jsonl(fp):
     return JsonLines(fp)
 
 ## output

@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from dxd.utils import asv, download, output, unzip_text
+from readydata import parse_asv, download, output, unzip_text
 
-url = 'https://geonames.nga.mil/gns/html/cntyfile/geonames_20220606.zip'
+URL = 'https://geonames.nga.mil/gns/html/cntyfile/geonames_20220606.zip'
 
 FC_map = dict(
     A = 'Administrative region',
@@ -26,4 +26,4 @@ output('geonames', 'non_us', 'name feat_class lat:f long:f lang country_code not
          r.CC1,
          r.NOTE,
          int(r.PC) if r.PC else None,
-        ) for r in asv(unzip_text(download(url), 'Countries.txt'))))
+        ) for r in parse_asv(unzip_text(download(URL), 'Countries.txt'))))

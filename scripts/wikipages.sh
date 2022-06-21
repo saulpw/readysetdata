@@ -6,12 +6,9 @@ OUTDIR="output/wpinfoboxes"
 rm -rf $OUTDIR
 mkdir -p $OUTDIR
 
-tools/download.py $URL \
+scripts/download.py $URL \
     | bunzip2 - \
-    | tools/xml2jsonl.py 'page' \
-    | jq -c '{title, "text" : .revision["text"]["#text"]}' \
+    | scripts/xml2jsonl.py 'page' \
     | grep -i '{{infobox' \
-    | tee $OUTDIR/raw-infoboxes.jsonl \
-    | scripts/wp-infobox-parse.py \
-    | tee $OUTDIR/all-infoboxes.jsonl \
-    | tools/demux-jsonl.py 'infobox_type' -o $OUTDIR
+    | scripts/parse-wpinfobox.py \
+    | scripts/demux-jsonl.py 'infobox_type' $OUTDIR
