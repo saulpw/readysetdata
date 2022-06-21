@@ -122,7 +122,7 @@ def main():
     for i, text in enumerate(fileinput.input()):
         row = json.loads(text)
 
-        for box in parse_infoboxes(clean_wptext(row['text'])):
+        for box in parse_infoboxes(clean_wptext(row['revision']['text']['#text'])):
 
             if '--debug' in sys.argv:
                 print(i, row['title'], file=sys.stderr)

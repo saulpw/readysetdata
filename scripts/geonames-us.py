@@ -8,7 +8,7 @@ def main():
 
     import zipfile
     with zipfile.Path(data, data.namelist()[0]).open() as fp:
-        output('gnis', 'us', 'name type state county lat:f long:f elev_m:i', ((
+        output('geonames', 'us', 'name type state county lat:f long:f elev_m:i', ((
 #            r.FEATURE_ID,
             r.FEATURE_NAME,
             r.FEATURE_CLASS,

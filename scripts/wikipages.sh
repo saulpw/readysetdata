@@ -1,7 +1,7 @@
 #!/bin/sh
 
 URL="https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles-multistream.xml.bz2"
-OUTDIR="output/wp-infoboxes"
+OUTDIR="output/wpinfoboxes"
 
 rm -rf $OUTDIR
 mkdir -p $OUTDIR
