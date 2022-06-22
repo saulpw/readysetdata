@@ -1,12 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import os
 import sys
-import shutil
 
-from dxd.utils import download
+import readysetdata
 
-f = download(sys.argv[1])
+f = readysetdata.download(sys.argv[1])
 
 blocksize = 65536
 while r := f.read(blocksize):

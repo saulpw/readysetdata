@@ -1,5 +1,7 @@
-pyarrow
-python-dateutil
-mwparserfromhell
-duckdb
 requests
+python-dateutil
+
+pyarrow
+duckdb
+
+mwparserfromhell
