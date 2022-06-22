@@ -108,16 +108,10 @@ class RemoteZipStream(io.RawIOBase):
     def readable(self):
         return True
 
-    def readall(self):
-        raise
-
     def readinto(self, b, /):
         r = self.read(len(b))
         b[:len(r)] = r
         return len(r)
-
-    def write(self, b, /):
-        raise
 
     def read(self, n):
         while n > len(self._buffer):
