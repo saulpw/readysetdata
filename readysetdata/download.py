@@ -2,6 +2,7 @@ import os
 import sys
 
 from pathlib import Path
+import urllib3
 
 
 CACHE_DIR='cache'
@@ -45,9 +46,9 @@ class TeeFile:
 def download(urlstr:str):
     p = download_path(urlstr)
     if not p.exists():
-        import requests
-        resp = requests.get(urlstr, stream=True)
+        resp = urllib3.PoolManager().request('GET', urlstr, preload_content=False)
         total = int(resp.headers['Content-length'])
-        return TeeFile(resp.raw, p, total=total)
+        resp.name = Path(urlstr).name
+        return TeeFile(resp, p, total=total)
 
     return TeeFile(p.open(mode='rb'), total=os.stat(p).st_size)

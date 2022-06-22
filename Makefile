@@ -14,3 +14,7 @@ geonames:
 
 infoboxes:
 	PYTHONPATH=. scripts/wikipages.sh
+
+clean:
+	rm -rf cache/
+	rm -rf output/
