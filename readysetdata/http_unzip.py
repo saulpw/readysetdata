@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import sys
 import io
+import time
 import zlib
 import struct
 import fnmatch
@@ -108,6 +109,7 @@ class RemoteZipStream(io.RawIOBase):
         self._total = info.compress_size
         self.name = info.filename
         self._amtread = 0
+        self.start_time = time.time()
 
     def readable(self):
         return True
@@ -119,9 +121,11 @@ class RemoteZipStream(io.RawIOBase):
 
     def read(self, n):
         while n > len(self._buffer):
-            sys.stderr.write(f'\r{self._amtread/10**6:.02f}/{self._total/10**6:.02f}MB {self.name}')
+            elapsed_s = time.time()-self.start_time
+            sys.stderr.write(f'\r{elapsed_s:.0f}s  {self._amtread/10**6:.02f}/{self._total/10**6:.02f}MB  ({self._amtread/10**6/elapsed_s:.02f} MB/s)  {self.name}')
             r = self.raw.read(2**18)
             if not r:
+                sys.stderr.write('\n')
                 break
             self._amtread += len(r)
             self._buffer += self._decompressor.decompress(r)

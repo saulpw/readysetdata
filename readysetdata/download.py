@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from pathlib import Path
 import urllib3
@@ -23,19 +24,22 @@ class TeeFile:
         self._teefp = teepath.open(mode='wb') if teepath else None
         self._amtread = 0
         self._total = total
+        self.start_time = time.time()
 
     def read(self, n):
         r = self._delegate.read(n)
 
         self._amtread += len(r)
 
-        sys.stderr.write(f'\r{self._amtread/10**6:.02f}/{self._total/10**6:.02f}MB {Path(self._delegate.name).name}')
+        elapsed_s = time.time()-self.start_time
+        sys.stderr.write(f'\r{elapsed_s:.0f}s  {self._amtread/10**6:.02f}/{self._total/10**6:.02f}MB  ({self._amtread/10**6/elapsed_s:.02f} MB/s)  {Path(self._delegate.name).name}')
 
         if self._teefp:
             if r:
                 self._teefp.write(r)
             else:
                 self._teefp.close()
+                sys.stderr.write('\n')
 
         return r
 

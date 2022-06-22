@@ -5,39 +5,37 @@ A collection of interesting datasets and the tools to convert them into ready-to
 # Features
 
 - curated and cleaned datasets: quality over quantity
-- all tools and pipelines are streaming: no waiting for first results
+- all tools and pipelines are streaming: first results are available immediately
 - fields and units are clearly labeled and properly-typed
 - data is output in immediately usable formats (Parquet, Arrow, DuckDB)
 - datasets conform to reasonable standards (UTF-8, RFC3339 dates, decimal lat/long coords, SI units)
 
-# Install
+# Setup
 
 Requires Python 3.8+.
 
-    make setup
-
-or
-
-    pip install -r requirements.txt
+    git clone https://github.com/saulpw/readysetdata.git
+    cd readysetdata
+    make setup  # install dependencies via pip
 
 # Datasets
 
 Output is generated for all available formats and put in the `OUTPUT` directory (`output/` by default).
 
-## `make infoboxes` (2.5GB)
+## `make movielens` (150MB, 3 tables, 5 minutes)
 
-- 4m Wikipedia infoboxes organized by type, in JSONL format.
+- 84k movies and 28m ratings from [MovieLens](https://movielens.org/)
 
-See results immediately as they accumulate in `output/wp-infoboxes`!
-
-## `make geonames` (500MB)
+## `make geonames` (500MB, 2 tables, 10 minutes)
 
 - 2.2m US place names and lat/long coordinates from [USGS GNIS](https://www.usgs.gov/tools/geographic-names-information-system-gnis)
 - 13.6m non-US places from [NGA GNS](https://geonames.nga.mil/gns/html/).
 
-## `make movielens` (125MB)
+## `make infoboxes` (2.5GB, 3800+ categories, 12 hours)
 
-- 84k movies and 28m ratings from [MovieLens](https://movielens.org/)
+- 4m Wikipedia infoboxes organized by type, in JSONL format
+
+See results immediately as they accumulate in `output/wp-infoboxes`!
 
 # Supported output formats
 
@@ -47,26 +45,28 @@ Specify with `-f <formats>` to individual scripts.  Separate multiple formats by
 - [Apache Arrow IPC format](https://arrow.apache.org/docs/cpp/ipc.html): `arrow` and `arrows`
 - [DuckDB](https://duckdb.org): `duckdb`
 
-# Tools
+# Scripts
 
-## `scripts/remote-unzip.py <url> <filename>`
+These live in the `scripts/` directory.  Some of them require the `readysetdata` module to be installed.  For the moment, set `PYTHONPATH=.` and run from the toplevel directory.
+
+## `remote-unzip.py <url> <filename>`
 
 Extract `<filename>` from .zip file at `<url>`, and stream to stdout.  Only downloads the one file; does not need to download the entire .zip.
 
-## `scripts/download.py <url>`
+## `download.py <url>`
 
-Download from `<url>` and stream to stdout.  The data for e.g. `https://example.com/path/to/file.csv` will be cached at `cache/example.com/path/to/file.csv'.
+Download from `<url>` and stream to stdout.  The data for e.g. `https://example.com/path/to/file.csv` will be cached at `cache/example.com/path/to/file.csv`.
 
-## `scripts/xml2json.py <tag>`
+## `xml2json.py <tag>`
 
 Parse XML from stdin, and emit JSONL to stdout for the given `<tag>`.
 
-## `scripts/demux-jsonl.py <field>`
+## `demux-jsonl.py <field>`
 
 Parse JSONL from stdin, and append each JSONL verbatim to its `<field-value>.jsonl`.
 
 # Credits
 
-Created and curated by [Saul Pwanson](https://saul.pw).
+Created and curated by [Saul Pwanson](https://saul.pw).  Licensed for use under Apache 2.0.
 
 Enabled by [Apache Arrow](https://arrow.apache.org/) and [Voltron Data](https://voltrondata.com).

@@ -12,6 +12,3 @@ scripts/download.py $URL \
     | grep -i '{{infobox' \
     | scripts/parse-wpinfobox.py \
     | scripts/demux-jsonl.py 'infobox_type' $OUTDIR
-
-
-cd $OUTDIR && zip ../wikipedia-infoboxes.zip *
