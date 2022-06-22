@@ -46,7 +46,7 @@ Output is generated for all available formats and put in the `OUTPUT` directory 
 
 - 4m Wikipedia infoboxes organized by type, in JSONL format
 
-See results immediately as they accumulate in `output/wp-infoboxes`!
+See results immediately as they accumulate in `output/wp-infoboxes`.
 
 # Supported output formats
 
