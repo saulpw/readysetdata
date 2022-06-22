@@ -28,8 +28,6 @@ Output is generated for all available formats and put in the `OUTPUT` directory 
 
 - 4m Wikipedia infoboxes organized by type, in JSONL format.
 
-    scripts/wikipages.sh
-
 See results immediately as they accumulate in `output/wp-infoboxes`!
 
 ## `make geonames` (500MB)
