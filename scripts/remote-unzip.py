@@ -23,7 +23,7 @@ def main(url, *globs):
             print(f'{f.compress_size/2**20:.02f}MB -> {f.file_size/2**20:.02f}MB  {f.filename}')
         elif any(fnmatch.fnmatch(f.filename, g) for g in globs):
             fp = rzf.open(f)
-            while r := fp.read(65536):
+            while r := fp.read(2**18):
                 sys.stdout.buffer.write(r)
 
 

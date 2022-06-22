@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+import sys
 import io
 import zlib
 import struct
@@ -91,7 +92,7 @@ class RemoteZipFile:
             return self.get_range(f.header_offset + sizeof_localhdr + fnlen + extralen, f.compress_size)
         elif method == 8: # DEFLATE
             resp = self.get_range(f.header_offset + sizeof_localhdr + fnlen + extralen, f.compress_size)
-            return RemoteZipStream(resp)
+            return RemoteZipStream(resp, f)
         else:
             raise Exception(f'unknown compression method {method}')
 
@@ -100,10 +101,13 @@ class RemoteZipFile:
 
 
 class RemoteZipStream(io.RawIOBase):
-    def __init__(self, fp):
+    def __init__(self, fp, info):
         self.raw = fp
         self._decompressor = zlib.decompressobj(-15)
         self._buffer = bytes()
+        self._total = info.compress_size
+        self.name = info.filename
+        self._amtread = 0
 
     def readable(self):
         return True
@@ -115,9 +119,11 @@ class RemoteZipStream(io.RawIOBase):
 
     def read(self, n):
         while n > len(self._buffer):
-            r = self.raw.read(65536)
+            sys.stderr.write(f'\r{self._amtread/10**6:.02f}/{self._total/10**6:.02f}MB {self.name}')
+            r = self.raw.read(2**18)
             if not r:
                 break
+            self._amtread += len(r)
             self._buffer += self._decompressor.decompress(r)
 
         ret = self._buffer[:n]

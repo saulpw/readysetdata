@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-import zipfile
-
-from readysetdata import download, unzip, output, parse_asv
+from readysetdata import unzip_url, output, parse_asv
 
 URL = 'https://geonames.usgs.gov/docs/stategaz/NationalFile.zip'
 
-data = unzip(download(URL))
+data = unzip_url(URL)
 
-with zipfile.Path(data, data.namelist()[0]).open() as fp:
+with data.open_text('*') as fp:
     output('geonames', 'us', ({
 #        'feature_id': r.FEATURE_ID,
         'name': r.FEATURE_NAME,

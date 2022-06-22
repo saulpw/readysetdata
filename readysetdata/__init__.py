@@ -26,13 +26,6 @@ class Progress:
     def __iter__(self):
         for i, x in enumerate(self.iterator):
             yield x
-            if i % 10000 == 0:
-                print(f'\r{self.name} {i}', end='', file=sys.stderr)
-                sys.stderr.flush()
-                if debug and i:
-                    break
-
-        print('', file=sys.stderr)
 
 
 def get_optarg(arg):

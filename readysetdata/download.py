@@ -28,7 +28,7 @@ class TeeFile:
 
         self._amtread += len(r)
 
-        sys.stderr.write(f'\r{self._amtread//2**20}/{self._total//2**20}MB')
+        sys.stderr.write(f'\r{self._amtread/10**6:.02f}/{self._total/10**6:.02f}MB {Path(self._delegate.name).name}')
 
         if self._teefp:
             if r:
