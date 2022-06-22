@@ -1,87 +1,74 @@
-# Ready Data
+# Ready, Set, Data!
 
-A curated collection of interesting datasets and the scripts needed to convert them into a ready-to-use format.
+A collection of interesting datasets and the tools to convert them into ready-to-use formats.
 
-## What makes data ready-to-use
+# Features
 
-- in an instantly usable format (Parquet, Arrow, DuckDB, Sqlite)
-- no parsing required
-- structurally convenient
-- clearly labeled tables, fields, and units
-- properly-typed (both data types and units)
-- conforming to reasonable standards (UTF-8, RFC3339 dates, decimal lat/long coords, SI units)
-- can be downloaded and used locally (under 10GB)
-
-## Datasets available
-
-* Movie metadata and ratings (84k movies and 28m ratings; 125MB)
-* Geographical place names and coordinates (2.2m US and 13.6m non-US; 500MB)
-* Wikipedia infoboxes (4m infoboxes; 2.5GB)
+- curated and cleaned datasets: quality over quantity
+- all tools and pipelines are streaming: no waiting for first results
+- fields and units are clearly labeled and properly-typed
+- data is output in immediately usable formats (Parquet, Arrow, DuckDB)
+- datasets conform to reasonable standards (UTF-8, RFC3339 dates, decimal lat/long coords, SI units)
 
 # Install
 
-## Requirements
+Requires Python 3.8+.
 
-- Python 3.8+
-- Python modules listed in requirements.txt
-- [jq](https://stedolan.github.io/jq/)
+    make setup
+
+or
 
     pip install -r requirements.txt
 
-# Usage
+# Datasets
 
-## Wikipedia Infoboxes
+Output is generated for all available formats and put in the `OUTPUT` directory (`output/` by default).
 
-All infoboxes organized by type, in JSONL format.  See results in `output/wp-infoboxes` as the source xml.bz2 streams in!
+## `make infoboxes` (2.5GB)
+
+- 4m Wikipedia infoboxes organized by type, in JSONL format.
 
     scripts/wikipages.sh
 
-## Geonames
+See results immediately as they accumulate in `output/wp-infoboxes`!
 
-Lists of place names and lat/long coordinates.
+## `make geonames` (500MB)
 
-- 2m+ US places from [USGS GNIS](https://www.usgs.gov/tools/geographic-names-information-system-gnis)
-- 13m+ non-US places [NGA GNS](https://geonames.nga.mil/gns/html/).
+- 2.2m US place names and lat/long coordinates from [USGS GNIS](https://www.usgs.gov/tools/geographic-names-information-system-gnis)
+- 13.6m non-US places from [NGA GNS](https://geonames.nga.mil/gns/html/).
 
-    scripts/geonames-us.py [options]
-    scripts/geonames-nonus.py [options]
+## `make movielens` (125MB)
 
-## [MovieLens](https://movielens.org/)
+- 84k movies and 28m ratings from [MovieLens](https://movielens.org/)
 
-Movie metadata, ratings, and genres.
+# Supported output formats
 
-    scripts/movielens.py [options]
-
-### Options
-
-- `-f <format>` to output in a specific format, where `<format>` is any number of supported output formats (comma-separated)
-- `-o <output_dir>` to output into a specific directory (will be created if not exist)
-- `--debug`: stop parsing after 10000 rows
-
-## Supported output formats
-
-Specify with `-o`; multiple formats separated with `,`.  If not specified, all available formats will be output.
+Specify with `-f <formats>` to individual scripts.  Separate multiple formats by `,`.  All available formats will be output by default.
 
 - [Apache Parquet](https://parquet.apache.org/): `parquet`
 - [Apache Arrow IPC format](https://arrow.apache.org/docs/cpp/ipc.html): `arrow` and `arrows`
 - [DuckDB](https://duckdb.org): `duckdb`
 
-# Helper tools
+# Tools
 
-## `tools/download.py <url>`
+## `scripts/remote-unzip.py <url> <filename>`
+
+Extract `<filename>` from .zip file at `<url>`, and stream to stdout.  Only downloads the one file; does not need to download the entire .zip.
+
+## `scripts/download.py <url>`
 
 Download from `<url>` and stream to stdout.  The data for e.g. `https://example.com/path/to/file.csv` will be cached at `cache/example.com/path/to/file.csv'.
 
-## `tools/xml2json.py <tag>`
+## `scripts/xml2json.py <tag>`
 
 Parse XML from stdin, and emit JSONL to stdout for the given `<tag>`.
 
-## `tools/demux-jsonl.py <field>`
+## `scripts/demux-jsonl.py <field>`
 
 Parse JSONL from stdin, and append each JSONL verbatim to its `<field-value>.jsonl`.
 
 # Credits
 
-Curated and cleaned by [Saul Pwanson](https://saul.pw).
+Created and curated by [Saul Pwanson](https://saul.pw).
 
 Enabled by [Apache Arrow](https://arrow.apache.org/) and [Voltron Data](https://voltrondata.com).
