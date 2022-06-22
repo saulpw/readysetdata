@@ -101,7 +101,7 @@ def output(dbname, tblname, rows, schemastr=''):
     if fmtstr:
         fmts = fmtstr.split(',')
     else:
-        fmts = [func.removeprefix('output_')
+        fmts = [func[7:]
                   for func in globals()
                     if func.startswith('output_')]
 
