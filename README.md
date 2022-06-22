@@ -7,7 +7,7 @@ A collection of interesting datasets and the tools to convert them into ready-to
 - curated and cleaned datasets: quality over quantity
 - all tools and pipelines are streaming: first results are available immediately
 - fields and units are clearly labeled and properly-typed
-- data is output in immediately usable formats (Parquet, Arrow, DuckDB)
+- data is output in immediately usable formats (Parquet, Arrow, DuckDB, SQLite)
 - datasets conform to reasonable standards (UTF-8, RFC3339 dates, decimal lat/long coords, SI units)
 
 # Setup
@@ -55,6 +55,7 @@ Specify with `-f <formats>` to individual scripts.  Separate multiple formats by
 - [Apache Parquet](https://parquet.apache.org/): `parquet`
 - [Apache Arrow IPC format](https://arrow.apache.org/docs/cpp/ipc.html): `arrow` and `arrows`
 - [DuckDB](https://duckdb.org): `duckdb`
+- [SQLite](https://sqlite.org): `sqlite`
 
 # Scripts
 

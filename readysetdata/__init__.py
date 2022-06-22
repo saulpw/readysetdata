@@ -134,4 +134,5 @@ from .download import *
 from .arrow import *
 from .parquet import *
 from .duckdb import *
+from .sqlite import *
 from .http_unzip import *
