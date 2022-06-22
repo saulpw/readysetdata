@@ -102,7 +102,7 @@ def batchify(rows, n=10000):
         yield rowbatch
 
 
-def output(dbname, tblname, schemastr, rows):
+def output(dbname, tblname, rows, schemastr=''):
     fmtstr = get_optarg('-f')
 
     if fmtstr:
@@ -117,14 +117,20 @@ def output(dbname, tblname, schemastr, rows):
 
     dbpath = str(Path(outdir)/dbname)
 
+    outputters = []
+
     for i, rowbatch in enumerate(batchify(rows)):
         if i == 0:  # first batch
+            if not schemastr:
+                schemastr = ' '.join(rowbatch[0].keys())
+
             outputters = [
                 globals()[f'output_{fmt}'](dbpath, tblname, schemastr)
                     for fmt in fmts
             ]
         for outputter in outputters:
-            outputter.output_batch(rowbatch)
+            batchrows = [list(r.values()) for r in rowbatch]
+            outputter.output_batch(batchrows)
 
     for outputter in outputters:
         outputter.finalize()

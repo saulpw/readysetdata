@@ -3,7 +3,7 @@
 import sys
 import re
 
-from readysetdata import parse_jsonl, download, unzip, output
+from readysetdata import parse_jsonl, download, unzip_url, output
 
 URL='https://files.grouplens.org/datasets/tag-genome-2021/genome_2021.zip'
 
@@ -13,10 +13,10 @@ def split_names(s):
     return re.split(r',(?!\s?Jr.,)\s*', s)
 
 
-data = unzip(download(URL))
+data = unzip_url(URL)
 
 def lens_raw(rawtblname):
-    return parse_jsonl(data.open(f'movie_dataset_public_final/raw/{rawtblname}.json'))
+    return parse_jsonl(data.open_text(f'*{rawtblname}.json'))
 
 movie_ids = {}  # movielens.item_id -> imdb_id
 

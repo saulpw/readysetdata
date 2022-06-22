@@ -1,9 +1,15 @@
 from dataclasses import dataclass
 
-import urllib3
 import io
 import zlib
 import struct
+import fnmatch
+
+import urllib3
+
+
+def error(s):
+    raise Exception(s)
 
 
 @dataclass
@@ -63,20 +69,34 @@ class RemoteZipFile:
     def get_range(self, start, n):
         return self.http.request('GET', self.url, headers={'Range': f'bytes={start}-{start+n}'}, preload_content=False)
 
-    def open(self, f):
-        if isinstance(f, str):
-            f = self.files[fn]
+    def matching_files(self, *globs):
+        for f in self.files.values():
+            if any(fnmatch.fnmatch(f.filename, g) for g in globs):
+                yield f
+
+    def open(self, fn):
+        if isinstance(fn, str):
+            f = list(self.matching_files(fn))
+            if not f:
+                error(f'no files matching {fn}')
+            f = f[0]
+        else:
+            f = fn
 
         sizeof_localhdr = struct.calcsize(self.fmt_localhdr)
         r = self.get_range(f.header_offset, sizeof_localhdr)
-        magic, ver, flags, method, dos_datetime, crc, complen, uncomplen, fnlen, extralen = struct.unpack_from(self.fmt_localhdr, r.data)
+        localhdr = struct.unpack_from(self.fmt_localhdr, r.data)
+        magic, ver, flags, method, dos_datetime, _, _, uncomplen, fnlen, extralen = localhdr
         if method == 0: # none
-            return self.get_range(f.header_offset + sizeof_localhdr + fnlen + extralen, complen)
+            return self.get_range(f.header_offset + sizeof_localhdr + fnlen + extralen, f.compress_size)
         elif method == 8: # DEFLATE
-            resp = self.get_range(f.header_offset + sizeof_localhdr + fnlen + extralen, complen)
+            resp = self.get_range(f.header_offset + sizeof_localhdr + fnlen + extralen, f.compress_size)
             return RemoteZipStream(resp)
         else:
             raise Exception(f'unknown compression method {method}')
+
+    def open_text(self, fn):
+        return io.TextIOWrapper(io.BufferedReader(self.open(fn)))
 
 
 class RemoteZipStream(io.RawIOBase):
@@ -93,7 +113,7 @@ class RemoteZipStream(io.RawIOBase):
 
     def readinto(self, b, /):
         r = self.read(len(b))
-        b[:] = r
+        b[:len(r)] = r
         return len(r)
 
     def write(self, b, /):
@@ -109,3 +129,7 @@ class RemoteZipStream(io.RawIOBase):
         ret = self._buffer[:n]
         self._buffer = self._buffer[n:]
         return ret
+
+
+def unzip_url(url):
+    return RemoteZipFile(url)
