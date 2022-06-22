@@ -125,13 +125,16 @@ class RemoteZipStream(io.RawIOBase):
             sys.stderr.write(f'\r{elapsed_s:.0f}s  {self._amtread/10**6:.02f}/{self._total/10**6:.02f}MB  ({self._amtread/10**6/elapsed_s:.02f} MB/s)  {self.name}')
             r = self.raw.read(2**18)
             if not r:
-                sys.stderr.write('\n')
                 break
             self._amtread += len(r)
             self._buffer += self._decompressor.decompress(r)
 
         ret = self._buffer[:n]
         self._buffer = self._buffer[n:]
+
+        if not ret:
+            sys.stderr.write('\n')
+
         return ret
 
 
