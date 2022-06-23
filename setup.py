@@ -28,6 +28,6 @@ setup(
         python_requires=">=3.8",
         py_modules=["readysetdata"],
         packages=["readysetdata"],
-        #scripts=["scripts/remote-unzip.py"],
+        scripts=["scripts/remote-unzip.py"],
         install_requires=requirements(),
 )
