@@ -16,7 +16,18 @@ Requires Python 3.8+.
 
     git clone https://github.com/saulpw/readysetdata.git
     cd readysetdata
-    make setup  # install dependencies via pip
+
+Then from within the repository,
+
+    make setup
+
+or
+
+    pip install .
+
+or
+
+    python3 setup.py install
 
 # Datasets
 
