@@ -27,7 +27,7 @@ setup(
         url="https://github.com/saulpw/readysetdata",
         python_requires=">=3.8",
         py_modules=["readysetdata"],
+        install_requires=["unzip-http"],
         packages=["readysetdata"],
-        scripts=["scripts/remote-unzip.py"],
         install_requires=requirements(),
 )
