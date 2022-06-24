@@ -104,6 +104,7 @@ def getquals(d):
 
     return r
 
+
 def main():
     properties.update({
         row.wd_propid:row.label
@@ -114,9 +115,12 @@ def main():
     x = ''
     for row in parse_jsonl(fileinput.input()):
         try:
+            label = getitemdeep(row, 'labels.en.value', None),
+            if not label:  # no english label
+                continue
             d = {
                 'wd_id': row.id,
-                'label': getitemdeep(row, 'labels.en.value', None),
+                'label': label,
                 'description': getitemdeep(row, 'descriptions.en.value', None),
                 'aliases:As': [r['value'] for r in getitemdeep(row, 'aliases.en', []) or []] or None,
             }
