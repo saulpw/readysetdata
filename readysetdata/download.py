@@ -53,6 +53,7 @@ def download(urlstr:str):
         resp = urllib3.PoolManager().request('GET', urlstr, preload_content=False)
         total = int(resp.headers['Content-length'])
         resp.name = Path(urlstr).name
-        return TeeFile(resp, p, total=total)
+#        return TeeFile(resp, p, total=total)
+        return TeeFile(resp, total=total)  # do not cache for now
 
     return TeeFile(p.open(mode='rb'), total=os.stat(p).st_size)

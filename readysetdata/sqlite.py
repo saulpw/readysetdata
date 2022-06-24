@@ -8,6 +8,7 @@ def struct_to_sqlite_type(s):
 
 
 class SqliteOutputter:
+    takes_dicts = False
     def __init__(self, fn, tblname, schema):
         self.fn = fn
         self.tblname = tblname
@@ -24,7 +25,7 @@ class SqliteOutputter:
             self.con.executemany(f"INSERT INTO {self.tblname} (%s) VALUES (%s)" % (
                 ','.join(name for name, _, _ in self.schema),
                 ','.join(['?']*len(self.schema))),
-                [[f(x) for x, (_, _, f) in zip(row, self.schema)] for row in rowbatch])
+                [[f(x) if x else None for x, (_, _, f) in zip(row, self.schema)] for row in rowbatch])
 
         self.con.commit()
 

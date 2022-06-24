@@ -2,6 +2,7 @@ from .arrow import parse_schema
 
 
 class ParquetOutputTable:
+    takes_dicts = False
     def __init__(self, fn, schema):
         self.fn = fn
         self.rows = []

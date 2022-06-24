@@ -43,6 +43,7 @@ def output_arrows(dbname, tblname, schemastr):
 
 
 class ArrowOutput:
+    takes_dicts = False
     def __init__(self, fn, schema, stream=False):
         import pyarrow as pa
 
