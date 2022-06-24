@@ -14,19 +14,9 @@ tables = {}
 
 
 def output(dbname, tblname, rows):
-    for r in rows:
-        output1(dbname, tblname, r)
-
-    for outputter in outputters:
-        outputter.finalize()
-
-
-def output1(dbname, tblname, row):
-    k = f'{dbname}_{tblname}'
-    if k not in tables:
-        tables[k] = OutputTable(dbname, tblname)
-
-    tables[k].output([row])
+    with OutputTable(dbname, tblname) as out:
+        for r in rows:
+            out.output(r)
 
 
 class OutputTable:
@@ -39,7 +29,7 @@ class OutputTable:
         self.batch_size = 100
 
         if not formats:
-            formats = get_optarg('-f', 'FORMATS') or ''
+            formats = get_optarg('-f', 'FORMATS')
 
         self.formats = [x for x in formats.split(',') if x]
 
@@ -48,14 +38,20 @@ class OutputTable:
                     for func in globals()
                         if func.startswith('output_')]
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, tb):
+        for o in self.outputters:
+            o.finalize()
 
     @property
     def dbpath(self):
-        outdir = get_optarg('-o') or '.'
+        outdir = get_optarg('-o', 'OUTDIR', '.')
         Path(outdir).mkdir(parents=True, exist_ok=True)
         return str(Path(outdir)/self.dbname)
 
-    def output(self, rows):
+    def output(self, *rows):
         for r in rows:
             if not self.outputters:
                 if not self.schemastr:

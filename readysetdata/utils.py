@@ -2,6 +2,46 @@ import os
 import sys
 
 
+def warning(*args):
+    print('\n', *args, file=sys.stderr)
+
+
+def intfloat(s):
+    try:
+        return int(s)
+    except ValueError:
+        return float(s)
+
+
+def getattrdeep(obj, attr, *default, getter=getattr):
+    try:
+        'Return dotted attr (like "a.b.c") from obj, or default if any of the components are missing.'
+        if not isinstance(attr, str):
+            return getter(obj, attr, *default)
+
+        try:  # if attribute exists, return toplevel value, even if dotted
+            if attr in obj:
+                return getter(obj, attr)
+        except Exception as e:
+            pass
+
+        attrs = attr.split('.')
+        for a in attrs[:-1]:
+            obj = getter(obj, a)
+
+        return getter(obj, attrs[-1])
+    except Exception as e:
+        if not default: raise
+        return default[0]
+
+
+def getitem(o, k, default=None):
+    return default if o is None else o[k]
+
+def getitemdeep(obj, k, *default):
+    return getattrdeep(obj, k, *default, getter=getitem)
+
+
 class AttrDict(dict):
     'Augment a dict with more convenient .attr syntax.  not-present keys return None.'
     def __getattr__(self, k):
@@ -26,15 +66,15 @@ class Progress:
             yield x
 
 
-def get_optarg(arg, envvar=''):
+def get_optarg(arg, envvar='', default=''):
     try:
         i = sys.argv.index(arg)
         return sys.argv[i+1]
     except ValueError:
         if envvar:
-            return os.getenv(envvar, '')
+            return os.getenv(envvar, default)
         else:
-            return ''
+            return default
 
 
 def batchify(rows, n=10000):
@@ -96,3 +136,8 @@ class JsonLines:
 
 def parse_jsonl(fp):
     return JsonLines(fp)
+
+def gunzip(fp):
+    import gzip
+    return gzip.open(fp)
+

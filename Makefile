@@ -1,6 +1,6 @@
 OUTPUT=output
-ARGS=-o ${OUTPUT}
 ZIP=zip -n .arrow
+export LANGS=en,ja
 
 all: movielens geonames wikipedia
 
@@ -8,20 +8,20 @@ setup:
 	pip3 install -r requirements.txt
 
 movielens:
-	PYTHONPATH=. scripts/movielens.py ${ARGS}
+	scripts/movielens.py -o ${OUTPUT}
 	cd ${OUTPUT} && ${ZIP} movielens.arrowz movielens_*.arrow
 
 geonames:
-	PYTHONPATH=. scripts/geonames-us.py ${ARGS}
-	PYTHONPATH=. scripts/geonames-nonus.py ${ARGS}
+	scripts/geonames-us.py -o ${OUTPUT}
+	scripts/geonames-nonus.py -o ${OUTPUT}
 	cd ${OUTPUT} && ${ZIP} geonames.arrowz geonames_*.arrow
 
 infoboxes:
-	PYTHONPATH=. scripts/wikipages.sh
+	OUTDIR=${OUTPUT}/wp-infoboxes scripts/wikipages.sh
 	cd ${OUTPUT}/wp-infoboxes && ${ZIP} ../wikipedia-infoboxes.zip *.jsonl
 
 wikidata:
-	FORMATS=jsonl PYTHONPATH=. scripts/wikidata.sh
+	OUTDIR=${OUTPUT}/wikidata scripts/wikidata.sh
 
 
 clean:

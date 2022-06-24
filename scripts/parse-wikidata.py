@@ -1,44 +1,25 @@
 #!/usr/bin/env python3
 
 import fileinput
+import sys
 import json
 
-from readysetdata import parse_jsonl, AttrDict, output1
+from readysetdata import parse_jsonl, output, debug, get_optarg, OutputTable, getitemdeep, warning
 
 
-def getattrdeep(obj, attr, *default, getter=getattr):
-    try:
-        'Return dotted attr (like "a.b.c") from obj, or default if any of the components are missing.'
-        if not isinstance(attr, str):
-            return getter(obj, attr, *default)
+LANGS=['en']
 
-        try:  # if attribute exists, return toplevel value, even if dotted
-            if attr in obj:
-                return getter(obj, attr)
-        except Exception as e:
-            pass
+known_props = 'P585 P580 P582 P577 P7588 P8555 P8554 P1326 P1319 P576 P7124 P7125 P6949 P569 P9905 P570 P2960 P5017'.split() # time/dates
 
-        attrs = attr.split('.')
-        for a in attrs[:-1]:
-            obj = getter(obj, a)
+claimfields=list('''
+entityid entity property
+v_string v_date v_amount:f v_unit v_entityid v_lat:f v_long:f
+q_string q_date q_amount:f q_unit q_entityid q_lat:f q_long:f
+'''.split())
 
-        return getter(obj, attrs[-1])
-    except Exception as e:
-        if not default: raise
-        return default[0]
+entity_labels = {}  # "Q##" -> "label"
+property_labels = {}
 
-
-def getitem(o, k, default=None):
-    return default if o is None else o[k]
-
-def getitemdeep(obj, k, *default):
-    return getattrdeep(obj, k, *default, getter=getitem)
-
-def intfloat(s):
-    try:
-        return int(s)
-    except ValueError:
-        return float(s)
 
 def wdvalue(x):
     t = x['type']
@@ -62,17 +43,14 @@ def wdvalue(x):
     elif 'text' in v:
         # should also base on property id
         lang = v.get('language').split('-')[0]
-        if lang != 'en':
+        if lang not in LANGS:
             return {}
         return {'text_'+lang: v['text']}
     return {t:v}
 
 
-properties = {}
 def prop(p):
-    return p+' '+properties.get(p, p)
-
-known_props = 'P585 P580 P582 P577 P7588 P8555 P8554 P1326 P1319 P576 P7124 P7125 P6949 P569 P9905 P570 P2960 P5017'.split() # time/dates
+    return p+' '+property_labels.get(p, p)
 
 def propkeyval(propid, snak):
     k = prop(propid)
@@ -86,9 +64,6 @@ def propkeyval(propid, snak):
 
     if t == 'value':
         d = wdvalue(snak['datavalue'])
-#        t = snak['datavalue']['type']
-#        if t == 'wikibase-entityid':
-#            t = 'entityid'
 
     for k1, v in d.items():
         if not k1 or not v:
@@ -107,78 +82,94 @@ def getquals(d):
 
     return r
 
-claimfields='''
-entityid
-entity
-property
-v_string
-v_text_en
-v_date
-v_amount:f
-v_unit
-v_entityid
-v_lat:f
-v_long:f
-q_string
-q_text_en
-q_date
-q_amount:f
-q_unit
-q_entityid
-q_lat:f
-q_long:f
-'''.split()
+
+def get_claims(row):
+    for propid, values in row.get('claims', {}).items():
+        for c in values:
+            if c['rank'] == 'deprecated':
+                continue
+            q = c['mainsnak']
+            x = dict((k, None) for k in claimfields)
+            x.update({
+                'entityid': row.id,
+                'entity': entity_labels.get(row.id, row.id),
+            })
+            for k, t, v in propkeyval(q['property'], q):
+                x['property'] = k
+                assert f'v_{t}' in x, (f'v_{t}', t, v, q)
+                x[f'v_{t}'] = v
+
+            if x['property'] is None:
+                continue
+
+            for k, v in getquals(c.get('qualifiers', {})).items():
+                assert k in x, k
+                x[k] = v
+
+            yield x
+
+
+def get_entity(row):
+    ret = dict(entityid=row.id)
+
+    n = 0
+    for lang in LANGS:
+        label = getitemdeep(row, f'labels.{lang}.value', None)
+        ret[f'label_{lang}'] = label
+        if label:
+            n += 1
+
+        aliases = getitemdeep(row, f'aliases.{lang}', []) or []
+        ret[f'aliases_{lang}:As'] = [r['value'] for r in aliases] or None
+        ret[f'description_{lang}'] = getitemdeep(row, f'descriptions.{lang}.value', None)
+
+    if not n:  # no labels from LANGS for entity
+        return
+
+    return ret
+
 
 def main():
-    properties.update({
-        row.wd_propid:row.label
-            for row in parse_jsonl(open('wd_properties.jsonl'))
-    })
+    global LANGS
+    global claimfields
+    LANGS = list(get_optarg("-l", "LANGS", 'en').split(','))
 
-    entities= {}
-    x = ''
-    for row in parse_jsonl(fileinput.input()):
-        try:
-            label = getitemdeep(row, 'labels.en.value', None)
-            if not label:  # no english label
-                continue
-            d = {
-                'wd_id': row.id,
-                'label': label,
-                'description': getitemdeep(row, 'descriptions.en.value', None),
-                'aliases:As': [r['value'] for r in getitemdeep(row, 'aliases.en', []) or []] or None,
-            }
-            x = d
-            entities[row.id] = d['label']
+    for lang in LANGS:
+        claimfields.append(f'v_text_{lang}')
+        claimfields.append(f'q_text_{lang}')
 
-            output1('wikidata', 'entities', d)
+    try:
+        property_rows = list(parse_jsonl(open('wd_properties.jsonl')))
+        property_labels.update({
+            row.wd_propid:row.label
+                for row in property_rows
+        })
 
-            for propid, values in row.get('claims', {}).items():
-                for c in values:
-                    if c['rank'] == 'deprecated':
-                        continue
-                    q = c['mainsnak']
-                    x = dict((k, None) for k in claimfields)
-                    x.update({
-                        'entityid': row.id,
-                        'entity': entities.get(row.id, row.id),
-#                        'property': k,
-                    })
-                    for k, t, v in propkeyval(q['property'], q):
-                        x['property'] = k
-                        assert f'v_{t}' in x, (f'v_{t}', t, v, q)
-                        x[f'v_{t}'] = v
+        output('wikidata', 'properties', property_rows)
+    except FileNotFoundError as e:
+        warning(f'{e} no wd_properties.jsonl')
+        if debug:
+            raise
 
-                    if x['property'] is None:
-                        continue
+    with OutputTable('wikidata', 'claims') as claims, \
+         OutputTable('wikidata', 'entities') as entities:
+        for row in parse_jsonl(fileinput.input()):
+            try:
+                x = None
+                x = get_entity(row)
+                if not x:
+                    continue
 
-                    for k, v in getquals(c.get('qualifiers', {})).items():
-                        assert k in x, k
-                        x[k] = v
+                entity_labels[row.id] = x[f'label_{LANGS[0]}']
 
-                    output1('wikidata', 'claims', x)
-        except Exception:
-            raise Exception(x)
+                entities.output(x)
+
+                claims.output(*get_claims(row))
+
+            except Exception as e:
+                warning(type(e), str(e), x)
+                if debug:
+                    raise
 
 
 main()
