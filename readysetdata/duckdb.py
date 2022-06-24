@@ -11,7 +11,7 @@ class DuckDbOutputter:
         self.con = duckdb.connect(fn)
         self.table_created = False
 
-    def output_batch(self, rowbatch):
+    def output_batch(self, rowbatch, rowdicts):
         import pyarrow as pa
 
         tbl = pa.table(list(zip(*rowbatch)), schema=pa.schema(self.schema))

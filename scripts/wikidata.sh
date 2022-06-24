@@ -9,5 +9,4 @@ mkdir -p $OUTDIR
 
 scripts/download.py $URL \
     | bunzip2 - \
-    | scripts/json2jsonl.py \
     | scripts/parse-wikidata.py

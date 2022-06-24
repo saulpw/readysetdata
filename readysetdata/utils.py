@@ -89,7 +89,9 @@ class JsonLines:
         import json
 
         for line in self.fp:
-            yield AttrDict(json.loads(line))
+            if len(line) > 2:
+                line = line.rstrip("\n,")
+                yield AttrDict(json.loads(line))
 
 
 def parse_jsonl(fp):

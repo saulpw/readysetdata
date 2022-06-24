@@ -7,7 +7,7 @@ class ParquetOutputTable:
         self.rows = []
         self.schema = schema
 
-    def output_batch(self, rowbatch):
+    def output_batch(self, rowbatch, _):
         self.rows.extend(rowbatch)
 
     def finalize(self):

@@ -15,7 +15,7 @@ class SqliteOutputter:
         self.con = sqlite3.connect(fn)
         self.table_created = False
 
-    def output_batch(self, rowbatch):
+    def output_batch(self, rowbatch, rowdicts):
         if not self.table_created:
             self.con.execute(f"DROP TABLE IF EXISTS {self.tblname}")
             self.con.execute(f"CREATE TABLE {self.tblname} (%s)" % ', '.join(f'{k} {v}' for k, v, _ in self.schema))

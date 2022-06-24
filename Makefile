@@ -20,6 +20,10 @@ infoboxes:
 	PYTHONPATH=. scripts/wikipages.sh
 	cd ${OUTPUT}/wp-infoboxes && ${ZIP} ../wikipedia-infoboxes.zip *.jsonl
 
+wikidata:
+	FORMATS=jsonl PYTHONPATH=. scripts/wikidata.sh
+
+
 clean:
 	rm -rf ${OUTPUT}
 	rm -rf cache/

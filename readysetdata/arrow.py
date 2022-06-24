@@ -53,7 +53,7 @@ class ArrowOutput:
         else:
             self.writer = pa.ipc.new_file(self.fp, pa.schema(schema))
 
-    def output_batch(self, rowbatch):
+    def output_batch(self, rowbatch, _):
         import pyarrow as pa
         data = [
             pa.array([r[i] for r in rowbatch], type=fieldtype)
