@@ -2,7 +2,6 @@ import json
 
 
 class JsonlOutputter:
-    takes_dicts = True
     def __init__(self, fn, schema):
         self.fn = fn
         self.schema = schema
@@ -10,7 +9,7 @@ class JsonlOutputter:
 
     def output_batch(self, rows):
         for r in rows:
-            print(json.dumps(r), file=self.fp)
+            print(json.dumps(zip(self.schema, r)), file=self.fp)
 
     def finalize(self):
         self.fp.close()
@@ -27,4 +26,3 @@ def output_jsonl(dbname, tblname, schemastr):
         schema.append(fieldname)
 
     return JsonlOutputter(f'{dbname}-{tblname}.jsonl', schema)
-

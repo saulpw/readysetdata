@@ -72,9 +72,6 @@ class OutputTable:
                 batch_dicts = self.rowbatch[:self.batch_size]
                 batch_tuples = [tuple(r.values()) for r in batch_dicts]
                 for outputter in self.outputters:
-                    if outputter.takes_dicts:
-                        outputter.output_batch(batch_dicts)
-                    else:
-                        outputter.output_batch(batch_tuples)
+                    outputter.output_batch(batch_tuples)
 
                 del self.rowbatch[:self.batch_size]

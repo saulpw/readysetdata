@@ -2,7 +2,6 @@ from .arrow import parse_schema
 
 
 class DuckDbOutputter:
-    takes_dicts = False
     def __init__(self, fn, tblname, schema):
         import duckdb
 
