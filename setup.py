@@ -20,14 +20,14 @@ setup(
         long_description_content_type="text/markdown",
         classifiers=[
             "Development Status :: 4 - Beta",
-            "Programming Language :: Python ::3",
+            "Programming Language :: Python :: 3",
         ],
         keywords="datasets readysetdata",
         author="Saul Pwanson",
         url="https://github.com/saulpw/readysetdata",
         python_requires=">=3.8",
         py_modules=["readysetdata"],
+        install_requires=["unzip-http"],
         packages=["readysetdata"],
-        scripts=["scripts/remote-unzip.py"],
         install_requires=requirements(),
 )
