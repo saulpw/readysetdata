@@ -1,9 +1,13 @@
 import os
 import sys
+import time
 
+
+def stderr(*args, file=sys.stderr):
+    sys.stderr.write(str(' '.join(args)))
 
 def warning(*args):
-    print('\n', *args, file=sys.stderr)
+    stderr('\n', *args)
 
 
 def intfloat(s):
@@ -60,9 +64,16 @@ class Progress:
     def __init__(self, iterator, name=''):
         self.iterator = iterator
         self.name = name
+        self.first_time = time.time()
+        self.last_time = time.time()
 
     def __iter__(self):
         for i, x in enumerate(self.iterator):
+            t = time.time()
+
+            if t - self.last_time > 0.1:
+                stderr(f'\r[{t - self.first_time:.1f}s] {i}')
+                self.last_time = t
             yield x
 
 
@@ -128,7 +139,7 @@ class JsonLines:
     def __iter__(self):
         import json
 
-        for line in self.fp:
+        for line in Progress(self.fp):
             if len(line) > 2:
                 line = line.rstrip("\n,")
                 yield AttrDict(json.loads(line))
