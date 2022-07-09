@@ -5,3 +5,5 @@ pyarrow
 duckdb
 
 mwparserfromhell
+
+faker

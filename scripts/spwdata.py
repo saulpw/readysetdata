@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 
+'''
+Usage: $0 <outfile.zip> [<level>]
+
+Generate 10^<level> amount of data and store in outfile.zip.
+'''
+
 import sys
 import string
 import json
 import zipfile
-from random import choice, randint, shuffle, normalvariate, choices, uniform
+from random import choice, randint, normalvariate, choices, uniform
 
 import faker
+
 
 class AttrDict(dict):
     def __getattr__(self, k):
@@ -65,13 +72,13 @@ def product():
             )
 
 
-def order():
+def order(maxitems=3):
     locale = choice(faker.locales)
     fake = faker[locale]
     dt = fake.date_time_this_year()
     c = choice(customers)
     items = []
-    for p in choices(products, k=randint(1, 4)):
+    for p in choices(products, k=randint(1, maxitems)):
         items.append(AttrDict(
             sku=p.sku,
             qty=randint(1, 5),
@@ -85,22 +92,38 @@ def order():
                 items=items
                 )
 
-products=[product() for i in range(10)]
-customers=[customer() for i in range(500)]
-orders=[order() for i in range(100)]
 
 def write_jsonl(fp, d):
     fp.write(json.dumps(d).encode()+b'\n')
 
-with zipfile.ZipFile(sys.argv[1], mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
-    with zf.open('products.jsonl', mode='w') as fp:
-        for x in products:
-            write_jsonl(fp, x)
 
-    with zf.open('customers.jsonl', mode='w') as fp:
-        for x in customers:
-            write_jsonl(fp, x)
+def main(outfn, level=1):
+    level = float(level)
+    nproducts, ncustomers, norders = 1, 2, 3
+    if level > 0:
+        nproducts = int(1*10**level)
+        ncustomers = int(5*10**level)
+        norders = int(10*10**level)
 
-    with zf.open('orders.jsonl', mode='w') as fp:
-        for x in orders:
-            write_jsonl(fp, x)
+    global products, customers, orders
+
+    products=[product() for i in range(nproducts)]
+    customers=[customer() for i in range(ncustomers)]
+    orders=[order(maxitems=int(2**level)) for i in range(norders)]
+
+    with zipfile.ZipFile(outfn, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        with zf.open('products.jsonl', mode='w') as fp:
+            for x in products:
+                write_jsonl(fp, x)
+
+        with zf.open('customers.jsonl', mode='w') as fp:
+            for x in customers:
+                write_jsonl(fp, x)
+
+        with zf.open('orders.jsonl', mode='w') as fp:
+            for x in orders:
+                write_jsonl(fp, x)
+
+
+if __name__ == '__main__':
+    main(*sys.argv[1:])
