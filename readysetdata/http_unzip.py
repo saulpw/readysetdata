@@ -122,7 +122,7 @@ class RemoteZipStream(io.RawIOBase):
     def read(self, n):
         while n > len(self._buffer):
             elapsed_s = time.time()-self.start_time
-            sys.stderr.write(f'\r{elapsed_s:.0f}s  {self._amtread/10**6:.02f}/{self._total/10**6:.02f}MB  ({self._amtread/10**6/elapsed_s:.02f} MB/s)  {self.name}')
+            sys.stderr.write(f'\n{elapsed_s:.0f}s  {self._amtread/10**6:.02f}/{self._total/10**6:.02f}MB  ({self._amtread/10**6/elapsed_s:.02f} MB/s)  {self.name}\n')
             r = self.raw.read(2**18)
             if not r:
                 break
