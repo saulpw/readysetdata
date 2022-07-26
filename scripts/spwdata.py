@@ -53,7 +53,7 @@ class FakeBusiness:
         opmode=descs('automatic manual mechanical electric power super mega ultra handmade vintage mini '),
         material=descs('steel lead leather iron stone pewter silver gold bronze ivory'),
         color=descs('blue yellow green mauve puce azure pearl white gold orange amber red mahogany magenta purple'),
-        food=descs('carrot peanut steak fajita tuna lettuce hamburger barbecue garlic candy apple melon cherry coffee bread spice chocolate mushroom cereal egg butter coconut potato onion cabbage cashew soybean lobster salad sandwich pie pizzaj'),
+        food=descs('carrot peanut steak fajita tuna lettuce hamburger barbecue garlic candy apple melon cherry coffee bread spice chocolate mushroom cereal egg butter coconut potato onion cabbage cashew soybean lobster salad sandwich pie pizza'),
         utensil=descs('knife bowl cup tongs spatula strainer scale pan crusher scoop'),
         gadget=descs('widget blender mixer crockpot timer toaster'),
         computer_adj=descs("wireless bluetooth network cellular women's"),
@@ -105,12 +105,12 @@ class FakeBusiness:
 
     def product(self):
         sz = randint(1, self.level)
-        baseprice = between(2**(sz-1), 2**(sz+1), round=0)
+        baseprice = between(5**(sz-1), 2**(sz+1), round=0)
         baseprice += choice([.0, .50, .90, .95, .99])
         return AttrDict(sku=self.sku(),
                 desc=self.description(),
                 baseprice=baseprice,
-                weight_kg=between(2**sz, 2**(sz+1), round=1),
+                weight_kg=between(4**sz, 2**(sz+1), round=1),
                 dims_cm=sorted([between(1.5, 25, round=1) for i in range(3)], reverse=True),
                 )
 
