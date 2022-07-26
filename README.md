@@ -32,17 +32,22 @@ or
 # Datasets
 
 Output is generated for all available formats and put in the `OUTPUT` directory (`output/` by default).
+Size and time estimates are for JSONL output on a small instance.
 
-## `make movielens` (150MB, 3 tables, 5 minutes)
+## `make movielens` (150MB, 3 tables, 5 minutes) (2019)
 
 - 84k movies and 28m ratings from [MovieLens](https://movielens.org/)
 
-## `make geonames` (500MB, 2 tables, 10 minutes)
+## `make imdb` (20GB, 7 tables, 1 hour; updated daily)
+
+- 9m movies/tv (1m rated), 7m tv episodes, 12m people from [imdb](https://www.imdb.com/interfaces/).
+
+## `make geonames` (500MB, 2 tables, 10 minutes; updated quarterly)
 
 - 2.2m US place names and lat/long coordinates from [USGS GNIS](https://www.usgs.gov/tools/geographic-names-information-system-gnis)
 - 13.6m non-US places from [NGA GNS](https://geonames.nga.mil/gns/html/).
 
-## `make infoboxes` (2.5GB, 3800+ categories, 12 hours)
+## `make infoboxes` (2.5GB, 3800+ categories, 12 hours; updated monthly)
 
 - 4m Wikipedia infoboxes organized by type, in JSONL format
 

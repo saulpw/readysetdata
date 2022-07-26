@@ -23,6 +23,8 @@ infoboxes:
 wikidata:
 	OUTDIR=${OUTPUT}/wikidata scripts/wikidata.sh
 
+imdb:
+	scripts/imdb.py -o ${OUTPUT}
 
 clean:
 	rm -rf ${OUTPUT}

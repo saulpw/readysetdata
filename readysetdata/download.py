@@ -21,10 +21,20 @@ def download_path(urlstr:str) -> Path:
 class TeeFile:
     def __init__(self, delegate, teepath=None, total=0):
         self._delegate = delegate
-        self._teefp = teepath.open(mode='wb') if teepath else None
+        self._teepath = teepath
+        self._teefp = None
         self._amtread = 0
         self._total = total
         self.start_time = time.time()
+
+    def __enter__(self):
+        self._teefp = self._teepath.open(mode='wb') if self._teepath else None
+        return self
+
+    def __exit__(self, type, value, tb):
+        self._delegate.close()
+        if self._teefp:
+            self._teefp.close()
 
     def read(self, n):
         r = self._delegate.read(n)

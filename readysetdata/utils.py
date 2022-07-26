@@ -132,6 +132,8 @@ def parse_asv(fp, delim='\t'):
         yield AttrDict(zip(hdrs, line.split(delim)))
 
 
+parse_tsv = parse_asv
+
 class JsonLines:
     def __init__(self, fp):
         self.fp = fp
@@ -148,7 +150,7 @@ class JsonLines:
 def parse_jsonl(fp):
     return JsonLines(fp)
 
-def gunzip(fp):
+def gunzip(fp, encoding='utf-8'):
     import gzip
-    return gzip.open(fp)
-
+    mode = 'rt' if encoding else 'rb'
+    return gzip.open(fp, mode=mode, encoding=encoding)
