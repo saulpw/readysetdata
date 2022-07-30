@@ -2,7 +2,7 @@ OUTPUT=output
 ZIP=zip -n .arrow
 export LANGS=en,ja
 
-all: movielens geonames wikipedia
+all: movielens geonames wikipedia infoboxes spwdata tpch imdb
 
 setup:
 	pip3 install -r requirements.txt
@@ -22,6 +22,12 @@ infoboxes:
 
 wikidata:
 	OUTDIR=${OUTPUT}/wikidata scripts/wikidata.sh
+
+fakedata:
+	scripts/fakedata.py ${OUTPUT}/fakedata.zip 3
+
+tpch:
+	scripts/tpch.py ${OUTPUT}/tpch-1gb.duckdb 1.0
 
 imdb:
 	scripts/imdb.py -o ${OUTPUT}
