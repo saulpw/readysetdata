@@ -50,14 +50,15 @@ def random_increasing(n):
 
 class FakeBusiness:
     desc_words = RandomDict(
-        opmode=descs('automatic manual mechanical electric power super mega ultra handmade vintage mini '),
-        material=descs('steel lead leather iron stone pewter silver gold bronze ivory'),
-        color=descs('blue yellow green mauve puce azure pearl white gold orange amber red mahogany magenta purple'),
-        food=descs('carrot peanut steak fajita tuna lettuce hamburger barbecue garlic candy apple melon cherry coffee bread spice chocolate mushroom cereal egg butter coconut potato onion cabbage cashew soybean lobster salad sandwich pie pizza'),
-        utensil=descs('knife bowl cup tongs spatula strainer scale pan crusher scoop'),
-        gadget=descs('widget blender mixer crockpot timer toaster'),
+        opmode=descs('automatic manual mechanical electric power super mega ultra handmade vintage toy mini '),
+        material=descs('steel lead leather iron stone pewter silver gold bronze ivory paper'),
+        color=descs('blue yellow green mauve puce azure pearl white gold sapphire emerald ruby diamond orange amber red mahogany magenta purple'),
+        food=descs('carrot peanut steak fajita tuna salmon lettuce hamburger barbecue garlic candy apple melon cherry coffee bread spice chocolate mushroom cereal egg butter coconut potato onion cabbage cashew soybean lobster salad sandwich pie pizza eggplant pineapple cookie cake nut'),
+        utensil=descs('knife bowl cup tongs spatula strainer scale pan crusher scoop ladle fork'),
+        tool=descs('capsule container box bag paintbrush bucket carton umbrella screw pin crayon pencil button scissors'),
+        gadget=descs('widget blender mixer crockpot timer toaster bicycle radio machine'),
         computer_adj=descs("wireless bluetooth network cellular women's"),
-        computer=descs('laptop keyboard monitor modem printer webcam router'),
+        computer=descs('laptop keyboard monitor modem printer webcam router camera phone'),
     )
 
     desc_templs = [
