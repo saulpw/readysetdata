@@ -7,3 +7,4 @@ duckdb
 mwparserfromhell
 
 faker
+spacy==3.4.1

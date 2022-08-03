@@ -5,7 +5,7 @@ import mwparserfromhell as mwp
 import dateutil.parser
 
 
-__all__ = ['parse_infoboxes']
+__all__ = ['parse_infoboxes', 'get_first_paragraph']
 
 
 def parse_infoboxes(text):
@@ -13,6 +13,14 @@ def parse_infoboxes(text):
         name = t.name.lower()
         if name.startswith('infobox'):
             yield from infobox_to_dicts(t)
+
+
+def get_first_paragraph(text):
+    clean_text = mwp.parse(text).strip_code()
+    clean_text = re.sub(r' \([^a-z]*\)', '', clean_text)
+    clean_text = re.sub(r'\([ ,;]*', '(', clean_text)
+    return {'first_paragraph': next(filter(lambda line: line.strip() and ('|' not in line.split()[0]),
+                                           clean_text.split('\n')), None)}
 
 
 def itervalues(n):
