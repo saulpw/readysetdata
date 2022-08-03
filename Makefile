@@ -20,6 +20,10 @@ infoboxes:
 	OUTDIR=${OUTPUT}/wp-infoboxes scripts/wikipages.sh
 	cd ${OUTPUT}/wp-infoboxes && ${ZIP} ../wikipedia-infoboxes.zip *.jsonl
 
+wikisummaries:
+	/usr/bin/env python3 -m spacy download en_core_web_sm
+	OUTDIR=${OUTPUT}/wp-summaries scripts/wikisummaries.sh
+
 wikidata:
 	OUTDIR=${OUTPUT}/wikidata scripts/wikidata.sh
 
