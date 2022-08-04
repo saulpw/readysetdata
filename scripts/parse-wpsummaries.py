@@ -18,10 +18,12 @@ for row in parse_jsonl(fileinput.input()):
     out = dict(wp_title=row.title, shard=row.title[0].lower())
     out.update(d)
 
-    if "first_paragraph" in out:
-        sentences = list(nlp(out["first_paragraph"]).sents)
-        if sentences:
-            out["first_sentence"] = str(sentences[0])
-        else:
-            out["first_sentence"] = out["first_paragraph"]
-        print(json.dumps(out))
+    if "first_paragraph" in out and out["first_paragraph"] is not None:
+        nlp_result = nlp(out["first_paragraph"])
+        if nlp_result:
+            sentences = list(nlp_result.sents)
+            if sentences:
+                out["first_sentence"] = str(sentences[0])
+            else:
+                out["first_sentence"] = out["first_paragraph"]
+            print(json.dumps(out))
