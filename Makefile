@@ -16,13 +16,11 @@ geonames:
 	scripts/geonames-nonus.py -o ${OUTPUT}
 	cd ${OUTPUT} && ${ZIP} geonames.arrowz geonames_*.arrow
 
-infoboxes:
-	OUTDIR=${OUTPUT}/wp-infoboxes scripts/wikipages.sh
-	cd ${OUTPUT}/wp-infoboxes && ${ZIP} ../wikipedia-infoboxes.zip *.jsonl
-
-wikisummaries:
+wikipedia:
 	/usr/bin/env python3 -m spacy download en_core_web_sm
-	OUTDIR=${OUTPUT}/wp-summaries scripts/wikisummaries.sh
+	OUTDIR=${OUTPUT} scripts/wikipages.sh
+	cd ${OUTPUT}/wikipedia-infoboxes && ${ZIP} ../wikipedia-infoboxes.zip *.jsonl
+	cd ${OUTPUT}/wikipedia && ${ZIP} ../wikipedia-summaries.zip summaries.jsonl
 
 wikidata:
 	OUTDIR=${OUTPUT}/wikidata scripts/wikidata.sh

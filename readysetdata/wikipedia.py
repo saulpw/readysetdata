@@ -1,12 +1,17 @@
 from itertools import chain
 import re
+import fileinput
+import json
 
 import mwparserfromhell as mwp
 import dateutil.parser
+import spacy
 
+from readysetdata import parse_jsonl, AttrDict
 
-__all__ = ['parse_infoboxes', 'get_first_paragraph']
+__all__ = ['parse_infoboxes', 'parse_summary']
 
+nlp = spacy.load("en_core_web_sm")
 
 def parse_infoboxes(text):
     for t in mwp.parse(clean_wptext(text), skip_style_tags=True).filter_templates(recursive=False):
@@ -15,12 +20,22 @@ def parse_infoboxes(text):
             yield from infobox_to_dicts(t)
 
 
-def get_first_paragraph(text):
-    clean_text = mwp.parse(text).strip_code()
-    clean_text = re.sub(r' \([^a-z]*\)', '', clean_text)
-    clean_text = re.sub(r'\([ ,;]*', '(', clean_text)
-    return {'first_paragraph': next(filter(lambda line: line.strip() and ('|' not in line.split()[0]),
-                                           clean_text.split('\n')), None)}
+def parse_summary(text):
+    t = mwp.parse(text).strip_code()
+    t = re.sub(r' \([^a-z]*\)', '', t)
+    t = re.sub(r'\([ ,;]*', '(', t)
+
+    paragraphs = filter(lambda line: line.strip() and ('|' not in line.split()[0]),
+                          t.split('\n'))
+
+
+    first_para = next(paragraphs, '')
+    r = nlp(first_para)
+
+    return AttrDict(
+               first_paragraph=first_para,
+               first_sentence=str(next(r.sents, first_para)) if r else first_para
+              )
 
 
 def itervalues(n):
@@ -71,7 +86,7 @@ def itervalues(n):
 
 
 def infobox_to_dicts(t):
-    r = dict(infobox_type=t.name[8:].strip())
+    r = AttrDict(infobox_type=t.name[8:].strip())
     ret = [r]
     for x in t.params:
         k = str(x.name).strip()

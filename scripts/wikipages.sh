@@ -5,6 +5,4 @@ URL="https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles-mult
 scripts/download.py $URL \
     | bunzip2 - \
     | scripts/xml2jsonl.py 'page' \
-    | grep -i '{{infobox' \
-    | scripts/parse-wpinfobox.py \
-    | scripts/demux-jsonl.py 'infobox_type' $OUTDIR
+    | FORMATS=jsonl scripts/parse-wikipedia.py

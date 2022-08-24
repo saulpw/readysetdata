@@ -47,9 +47,10 @@ Size and time estimates are for JSONL output on a small instance.
 - 2.2m US place names and lat/long coordinates from [USGS GNIS](https://www.usgs.gov/tools/geographic-names-information-system-gnis)
 - 13.6m non-US places from [NGA GNS](https://geonames.nga.mil/gns/html/).
 
-## `make infoboxes` (2.5GB, 3800+ categories, 12 hours; updated monthly)
+## `make wikipedia` (2.5GB, 3800+ categories, 12 hours; updated monthly)
 
 - 4m Wikipedia infoboxes organized by type, in JSONL format
+- Xm article summaries (first paragraph and first sentence)
 
 See results immediately as they accumulate in `output/wp-infoboxes`.
 
