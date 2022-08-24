@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 
 class JsonlOutputter:
@@ -8,10 +9,8 @@ class JsonlOutputter:
         self.fp = open(fn, 'w')
 
     def output_batch(self, rows_list, rows_dicts):
-#        for r in rows_dicts:
-#            print(json.dumps(r), file=self.fp)
-        for r in rows_list:
-            print(json.dumps(dict(zip(self.schema, r))), file=self.fp)
+        for r in rows_dicts:
+            print(json.dumps(r), file=self.fp)
 
     def finalize(self):
         self.fp.close()
@@ -27,4 +26,4 @@ def output_jsonl(dbname, tblname, schemastr):
             fieldname = field
         schema.append(fieldname)
 
-    return JsonlOutputter(f'{dbname}-{tblname}.jsonl', schema)
+    return JsonlOutputter(Path(dbname)/(tblname+'.jsonl'), schema)
