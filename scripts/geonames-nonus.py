@@ -3,6 +3,8 @@
 from readysetdata import parse_asv, output, unzip_url
 
 URL = 'https://geonames.nga.mil/gns/html/cntyfile/geonames_20220606.zip'
+# https://geonames.nga.mil/geonames/GNSData/fc_files/Whole_World.7z
+# URL and structure of zip have changed
 
 FC_map = dict(
     A = 'Administrative region',
