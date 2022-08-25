@@ -13,7 +13,7 @@ movielens:
 
 geonames:
 	scripts/geonames-us.py -o ${OUTPUT}
-	scripts/geonames-nonus.py -o ${OUTPUT}
+	# scripts/geonames-nonus.py -o ${OUTPUT} # commented out; url and structure of .zip have changed
 	cd ${OUTPUT} && ${ZIP} geonames.arrowz geonames_*.arrow
 
 wikipedia:
