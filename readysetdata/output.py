@@ -17,8 +17,13 @@ def outputSingle(dbname, tblname, row, **kwargs):
 
 def output(dbname, tblname, rows):
     with OutputTable(dbname, tblname) as out:
-        for r in rows:
-            out.output(r)
+        it = iter(rows)
+        while True:
+            try:
+                r = next(it)
+                out.output(r)
+            except Exception as e:
+                print(str(e), file=sys.stderr)
 
 
 def cleanid(orig):
