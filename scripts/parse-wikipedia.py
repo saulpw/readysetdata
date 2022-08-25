@@ -2,7 +2,7 @@
 
 import fileinput
 
-from readysetdata import wikipedia, parse_jsonl, output_single, finish
+from readysetdata import wikipedia, parse_jsonl, outputSingle, finish
 
 for row in parse_jsonl(fileinput.input()):
     if row.title.startswith("List of "):
@@ -12,7 +12,7 @@ for row in parse_jsonl(fileinput.input()):
     body = row.revision.text['#text']
 
     for d in wikipedia.parse_infoboxes(body):
-        output_single('wikipedia_infoboxes', d.infobox_type, dict(wp_title=row.title, **d), batch_size=1)
+        outputSingle('wikipedia_infoboxes', d.infobox_type, dict(wp_title=row.title, **d), batch_size=1)
 
     if body.startswith("REDIRECT"):
         continue
@@ -21,7 +21,7 @@ for row in parse_jsonl(fileinput.input()):
     if d['first_paragraph'].startswith("REDIRECT"):
         continue
 
-    output_single('wikipedia', 'article_summaries', dict(wp_title=row.title, **d), batch_size=1)
+    outputSingle('wikipedia', 'article_summaries', dict(wp_title=row.title, **d), batch_size=1)
 
 
 finish()
