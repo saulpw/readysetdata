@@ -1,6 +1,7 @@
 import sys
 import re
 from pathlib import Path
+import traceback
 
 from readysetdata import get_optarg
 
@@ -22,8 +23,10 @@ def output(dbname, tblname, rows):
             try:
                 r = next(it)
                 out.output(r)
+            except StopIteration:
+                break
             except Exception as e:
-                print(str(e), file=sys.stderr)
+                print(traceback.print_exc(), file=sys.stderr)
 
 
 def cleanid(orig):
