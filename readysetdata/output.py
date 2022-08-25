@@ -11,7 +11,7 @@ from .sqlite import *
 from .jsonl import *
 
 
-def output_single(dbname, tblname, row, **kwargs):
+def outputSingle(dbname, tblname, row, **kwargs):
     OutputTable.get(dbname, tblname, **kwargs).output(row)
 
 

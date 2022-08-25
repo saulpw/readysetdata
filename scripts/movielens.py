@@ -46,7 +46,7 @@ def movie_id(item_id):
     return movie_ids.get(item_id, 'LENS'+str(item_id))
 
 output('movielens', 'ratings', ({
-            'imdb_db': movie_id(d.item_id),
+            'imdb_id': movie_id(d.item_id),
             'rating:b': int(d.rating*2)
          } for d in lens_raw('ratings')))
 
