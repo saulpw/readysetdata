@@ -18,8 +18,6 @@ for row in parse_jsonl(fileinput.input()):
         continue
 
     d = wikipedia.parse_summary(body)
-    if d['first_paragraph'].startswith("REDIRECT"):
-        continue
 
     outputSingle('wikipedia', 'article_summaries', dict(wp_title=row.title, **d), batch_size=1)
 
