@@ -99,3 +99,5 @@ Parse JSONL from stdin, and append each JSONL verbatim to its `<field-value>.jso
 Created and curated by [Saul Pwanson](https://saul.pw).  Licensed for use under Apache 2.0.
 
 Enabled by [Apache Arrow](https://arrow.apache.org/) and [Voltron Data](https://voltrondata.com).
+
+Toponymic information is based on the Geographic Names Database, containing official standard names approved by the United States Board on Geographic Names and maintained by the National Geospatial-Intelligence Agency.More information is available at the Resources link at www.nga.mil. TheNational Geospatial-Intelligence Agencyname, initials, and seal are protected by 10 United States Code � Section 425.

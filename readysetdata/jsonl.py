@@ -6,14 +6,14 @@ class JsonlOutputter:
     def __init__(self, fn, schema):
         self.fn = fn
         self.schema = schema
-        self.fp = open(fn, 'w')
 
     def output_batch(self, rows_list, rows_dicts):
-        for r in rows_dicts:
-            print(json.dumps(r), file=self.fp)
+        with open(fn, 'w') as fp:
+            for r in rows_dicts:
+                print(json.dumps(r), file=fp)
 
     def finalize(self):
-        self.fp.close()
+        pass
 
 
 def output_jsonl(dbname, tblname, schemastr):
