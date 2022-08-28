@@ -19,7 +19,7 @@ geonames:
 wikipedia:
 	/usr/bin/env python3 -m spacy download en_core_web_sm
 	OUTDIR=${OUTPUT} scripts/wikipages.sh
-	cd ${OUTPUT}/wikipedia-infoboxes && ${ZIP} ../wikipedia-infoboxes.zip *.jsonl
+	cd ${OUTPUT}/wikipedia_infoboxes && ${ZIP} ../wikipedia-infoboxes.zip *.jsonl
 	cd ${OUTPUT}/wikipedia && ${ZIP} ../wikipedia-summaries.zip summaries.jsonl
 
 wikidata:
