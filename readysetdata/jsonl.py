@@ -8,7 +8,7 @@ class JsonlOutputter:
         self.schema = schema
 
     def output_batch(self, rows_list, rows_dicts):
-        with open(fn, 'w') as fp:
+        with open(self.fn, 'w') as fp:
             for r in rows_dicts:
                 print(json.dumps(r), file=fp)
 
