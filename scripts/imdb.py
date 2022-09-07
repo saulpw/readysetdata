@@ -5,8 +5,11 @@ import readysetdata as rsd
 
 def output_imdb(tblname, fn):
     IMDB='https://datasets.imdbws.com/'
-    with rsd.download(IMDB+fn) as fp:
-        rsd.output('imdb', tblname, rsd.parse_tsv(rsd.gunzip(fp)))
+    try:
+        with rsd.download(IMDB+fn) as fp:
+            rsd.output('imdb', tblname, rsd.parse_tsv(rsd.gunzip(fp)))
+    except Exception as e:
+        print(f"file {fn} failed to output completely: {repr(e)}")
 
 
 output_imdb('basics', 'title.basics.tsv.gz')
