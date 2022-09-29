@@ -16,7 +16,7 @@ nlp = spacy.load("en_core_web_sm")
 def parse_infoboxes(text):
     for t in mwp.parse(clean_wptext(text), skip_style_tags=True).filter_templates(recursive=False):
         name = t.name.lower()
-        if name.startswith('infobox'):
+        if name and name.split()[0].endswith('box'):
             yield from infobox_to_dicts(t)
 
 
