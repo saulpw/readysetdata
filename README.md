@@ -67,7 +67,9 @@ See results immediately as they accumulate in `output/wp-infoboxes`.
 
 # Supported output formats
 
-Specify with `-f <formats>` to individual scripts.  Separate multiple formats by `,`.  All available formats will be output by default.
+All available formats will be output by default.
+Specify a subset of formats by setting the `FORMATS` envvar, or pass `-f <formats>` to individual scripts.
+Separate multiple formats with `,`.
 
 - [Apache Parquet](https://parquet.apache.org/): `parquet`
 - [Apache Arrow IPC format](https://arrow.apache.org/docs/cpp/ipc.html): `arrow` and `arrows`
