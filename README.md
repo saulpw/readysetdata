@@ -1,35 +1,97 @@
 # Ready, Set, Data!
 
-A collection of interesting datasets and the tools to convert them into ready-to-use formats.
+A command-line tool and Python library to extract tabular data from any source and save it in any output format.
+
+# Rationale
+
+    I wish to apologize for something that is not my responsibility but is the result of physicists all over the world of scientists (so-called) [who] have been measuring things in different units and cause an enormous amount of complexity.  So as a matter of fact **nearly a third of what you have to learn consists of different ways of measuring the same thing** and I apologize for it.
+        -- Feynman Lectures on Physics (17 - Spacetime)
+
+Data formats are the same way and ReadySetData is my apology for it.
 
 # Features
 
-- curated and cleaned datasets: quality over quantity
-- all tools and pipelines are streaming: first results are available immediately
-- fields and units are clearly labeled and properly-typed
-- data is output in immediately usable formats (Parquet, Arrow, DuckDB, SQLite)
-- datasets conform to reasonable standards (UTF-8, RFC3339 dates, decimal lat/long coords, SI units)
+- Reads from local file, stdin, or url (http, s3, imap)
+- Detects encoding and format from filename, content, and metadata
+- Writes to local file (sqlite, parquet), stdout (json)
+- Streaming conversion
+- Shows Progress meter on stderr
+- Supports containers and compression (zip tar gz)
 
-# Setup
+## Supported formats
+
+- json jsonl
+- csv tsv
+- html
+- sqlite
+- xls xlsx
+- xlsx
+- [Apache Parquet](https://parquet.apache.org/): `parquet`
+- [Apache Arrow IPC format](https://arrow.apache.org/docs/cpp/ipc.html): `arrow` and `arrows`
+- [DuckDB](https://duckdb.org): `duckdb`
+- [SQLite](https://sqlite.org): `sqlite`
+- zip
+- gz bz2 xz
+- zstd
+
+# Installation
 
 Requires Python 3.8+.
 
     git clone https://github.com/saulpw/readysetdata.git
     cd readysetdata
 
-Then from within the repository,
-
-    make setup
-
-or
-
-    pip install .
-
-or
+Then from within the checkout,
 
     python3 setup.py install
 
-# Datasets
+or
+
+    pip3 install -e .
+
+# Usage
+
+    rsd [<input>] [-o <output>] [--option-name=value]
+
+This detects the type of `<input>`, reads the tabular data within, and writes it to `<output>`.
+The order of arguments does not matter.
+
+- `input` may be:
+  - `-` or missing: stdin
+  - URL: http, s3, mysql, imap
+  - pathname
+    - local file of any type
+    - a wildcard of a number of files from an archive/directory
+
+- `output` may be:
+  - `-` or missing: stdout (json by default, or csv or tsv)
+  - pathname
+    - a local file (xlsx, parquet)
+    - an archive/directory of local files (zip)
+    - a database (sqlite, duckdb)
+
+Available options depend on the input and output format.
+
+Performance varies.
+
+## A universal data converter
+
+     rsd https://example.com/hugefile.zip/*.csv -o hugefile.sqlite
+
+will save each .csv file in hugefile.zip as a table in `hugefile.sqlite`.
+
+
+
+----
+
+
+## Real Data
+
+A collection of interesting datasets and the tools to convert them into ready-to-use formats.
+
+- datasets conform to reasonable standards (UTF-8, RFC3339 dates, decimal lat/long coords, SI units)
+- curated and cleaned datasets: quality over quantity
+- fields and units are clearly labeled and properly typed
 
 Output is generated for all available formats and put in the `OUTPUT` directory (`output/` by default).
 Size and time estimates are for JSONL output on a small instance.
@@ -64,17 +126,6 @@ See results immediately as they accumulate in `output/wp-infoboxes`.
 - joinable products, customers, and orders tables for a fake business
 - unicode data, including japanese and arabic names and addresses
 - includes geo lat/long coords, numeric arrays, and arrays of structs
-
-# Supported output formats
-
-All available formats will be output by default.
-Specify a subset of formats by setting the `FORMATS` envvar, or pass `-f <formats>` to individual scripts.
-Separate multiple formats with `,`.
-
-- [Apache Parquet](https://parquet.apache.org/): `parquet`
-- [Apache Arrow IPC format](https://arrow.apache.org/docs/cpp/ipc.html): `arrow` and `arrows`
-- [DuckDB](https://duckdb.org): `duckdb`
-- [SQLite](https://sqlite.org): `sqlite`
 
 # Scripts
 

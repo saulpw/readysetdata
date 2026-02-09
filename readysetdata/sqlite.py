@@ -1,4 +1,7 @@
+from functools import cached_property
 import sqlite3
+
+from .utils import AttrDict
 
 
 def struct_to_sqlite_type(s):
@@ -45,3 +48,83 @@ def output_sqlite(dbname, tblname, schemastr):
             schema.append((field, "TEXT", func))
 
     return SqliteOutputter(f'{dbname}.sqlite', tblname, schema)
+
+
+def attrdict_factory(cursor, row):
+    fields = [column[0] for column in cursor.description]
+    return AttrDict((k,v) for k,v in zip(fields, row))
+
+
+class SqliteDatabase:
+    def __init__(self, dbfn):
+        self.dbfn = dbfn + '.sqlite'
+        self.tables = set()
+
+    @cached_property
+    def con(self):
+        con = sqlite3.connect(self.dbfn)
+        con.row_factory = attrdict_factory
+        return con
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, tb):
+        if not tb:
+            self.con.commit()
+        return False
+
+    def insert(self, tblname, **kwargs):
+        def sqltype(v):
+            if isinstance(v, int): return 'INTEGER'
+            if isinstance(v, float): return 'REAL'
+            return 'TEXT'
+
+        def sqlval(v):
+            if v is None: return v
+            if isinstance(v, (int, float, str)):
+                return v
+            return str(v)
+
+        if tblname not in self.tables:
+            fieldstr = ', '.join(f'{k} {sqltype(v)}' for k,v in kwargs.items())
+            self.con.execute(f'CREATE TABLE IF NOT EXISTS {tblname} ({fieldstr})')
+            self.tables.add(tblname)
+
+        fieldnames = ','.join(kwargs.keys())
+        valholders = ','.join(['?']*len(kwargs))
+        self.con.execute(f'INSERT INTO {tblname} ({fieldnames}) VALUES ({valholders})', tuple(sqlval(x) for x in kwargs.values()))
+        return AttrDict(kwargs)
+
+    def table(self, tblname):
+        return self.query(f'SELECT * FROM {tblname}')
+
+    def select(self, tblname: str, **kwargs) -> list[AttrDict]:
+        sql = f'SELECT * FROM "{tblname}"'
+        if kwargs:
+            sql += " WHERE "
+            sql += " AND ".join([f"{k}=?" for k in kwargs])
+
+        if kwargs:
+            return self.query(sql, list(kwargs.values()))
+        else:
+            return self.query(sql)
+
+    def query(self, qstr, args=[]):
+        try:
+            cur = self.con.cursor()
+            if args:
+                res = cur.execute(qstr, args)
+            else:
+                res = cur.execute(qstr)
+            return res.fetchall()
+        except sqlite3.OperationalError as e:
+            print(e)
+            raise
+            return []
+
+    def execute(self, qstr):
+        return self.con.execute(qstr)
+
+    def commit(self):
+        self.con.commit()

@@ -5,6 +5,7 @@ import time
 
 def stderr(*args, file=sys.stderr):
     sys.stderr.write(str(' '.join(args)))
+    sys.stderr.flush()
 
 def warning(*args):
     stderr('\n', *args)
@@ -58,6 +59,19 @@ class AttrDict(dict):
             if k.startswith("__"):
                 raise AttributeError
             return None
+
+    def __hasattr__(self, k):
+        return k in self
+
+    def __setattr__(self, k, v):
+        if k in self:
+            self[k] = v
+        else:
+            super().__setitem__(k, v)
+
+    def update(self, **kwargs):
+        keys = list(self.keys())
+        super().update({k:v for k,v in kwargs.items() if k in keys})
 
 
 class Progress:
@@ -136,6 +150,8 @@ parse_tsv = parse_asv
 
 class JsonLines:
     def __init__(self, fp):
+        if isinstance(fp, str):
+            fp = open(fp)
         self.fp = fp
 
     def __iter__(self):
